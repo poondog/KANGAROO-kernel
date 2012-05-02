@@ -349,9 +349,12 @@ struct tcp_sock {
 	u8	nonagle     : 4,/* Disable Nagle algorithm?             */
 		thin_lto    : 1,/* Use linear timeouts for thin streams */
 		thin_dupack : 1,/* Fast retransmit on first dupack      */
-		unused      : 2;
-
-/* RTT measurement */
+		repair      : 1,
+		unused      : 1;
+	u8	repair_queue;
+	u8	do_early_retrans:1;/* Enable RFC5827 early-retransmit  */
+ 
+ /* RTT measurement */
 	u32	srtt;		/* smoothed round trip time << 3	*/
 	u32	mdev;		/* medium deviation			*/
 	u32	mdev_max;	/* maximal mdev for the last rtt period	*/
