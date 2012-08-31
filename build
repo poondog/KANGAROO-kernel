@@ -1,0 +1,76 @@
+rm -f build.log
+rm -f error.log
+
+BASE=$PWD
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-androideabi-
+export PATH=$PATH:$BASE/toolchain/bin
+
+echo "" | tee -a build.log
+echo "/***************************/" | tee -a build.log
+echo "/*                         */" | tee -a build.log
+echo "/*   XS-ICS Build Script   */" | tee -a build.log
+echo "/*     by l0st.prophet     */" | tee -a build.log
+echo "/*                         */" | tee -a build.log
+echo "/***************************/" | tee -a build.log
+echo "" | tee -a build.log
+
+old_IFS=$IFS
+IFS=$'\n'
+lines=($(cat arch/arm/configs/XS_defconfig)) # array
+IFS=$old_IFS
+TEMP=${lines[32]}
+TEMP=`echo $TEMP | cut -c 23-`
+VER=${TEMP%?}
+echo "Version number: $VER" | tee -a build.log
+
+if [ -d toolchain/bin ]
+then
+	echo "" | tee -a build.log
+	echo "Cleaning old build files..." | tee -a build.log
+	make clean mrproper 2>&1 >> build.log 2>>error.log
+	wait $!
+	echo "Setting XS defconfig..." | tee -a build.log
+	make XS_defconfig 2>&1 >> build.log 2>>error.log
+	wait $!
+	echo "Building zImage & modules..." | tee -a build.log
+	make -j`grep 'processor' /proc/cpuinfo | wc -l` 2>&1 >> build.log 2>>error.log
+	wait $!
+
+	if [ -f arch/arm/boot/zImage ]
+	then
+		echo "" | tee -a build.log
+		echo "Build Completed Succesfully!" | tee -a build.log
+		echo "" | tee -a build.log
+		echo "Copying required files.." | tee -a build.log
+		rm -f flashable/kernel/zImage 2>&1 >> build.log 2>>error.log
+		cp arch/arm/boot/zImage flashable/kernel/ 2>&1 >> build.log 2>>error.log
+		rm -f flashable/system/lib/modules/bcm4329.ko 2>&1 >> build.log 2>>error.log
+		cp drivers/net/wireless/bcm4329_248/bcm4329.ko flashable/system/lib/modules/ 2>&1 >> build.log 2>>error.log
+		wait $!
+		echo "Creating flashable ZIP..." | tee -a build.log
+		rm -f flashable/*.zip
+		wait $!
+		cd flashable/
+		zip -r $VER.zip * -x *.gitignore 2>&1 >> $BASE/build.log 2>>$BASE/error.log
+		wait $!
+		cd $BASE
+		echo "" | tee -a build.log
+		echo "Performing final clean up..." | tee -a build.log
+		make clean mrproper 2>&1 >> build.log 2>>error.log
+		rm -f error.log
+		wait $!
+		echo ""
+		echo "Finshed. $VER is now complete" | tee -a build.log
+		echo "You will find a flashable zip in the 'flashables' folder." | tee -a build.log
+		echo ""
+	else
+		echo ""  | tee -a build.log
+		echo "Build incomplete. Please check error.log for details" | tee -a build.log
+		echo ""
+	fi
+else
+	echo ""  | tee -a build.log
+	echo "You do not have a toolchain installed. Please add a compatible GCC compiler to the 'toolchains' directory" | tee -a build.log
+	echo ""
+fi
