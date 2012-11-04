@@ -3,7 +3,7 @@
 #
 
 # Each configuration option enables a list of files.
-
+EXTRA_CFLAGS += -O1
 wm97xx-ts-y := wm97xx-core.o
 
 obj-$(CONFIG_TOUCHSCREEN_88PM860X)	+= 88pm860x-ts.o
