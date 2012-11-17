@@ -1415,7 +1415,6 @@ config SMP_ON_UP
 	 
 config ARM_CPU_TOPOLOGY
 	bool "Support cpu topology definition"
-	depends on SMP && CPU_V7
 	default y
 	help
 	  Support ARM cpu topology definition. The MPIDR register defines
