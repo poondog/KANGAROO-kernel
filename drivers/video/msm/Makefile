@@ -1,6 +1,7 @@
 
 # core framebuffer
 #
+EXTRA_CFLAGS += -Os
 obj-y := msm_fb.o
 
 # MDP DMA/PPP engine

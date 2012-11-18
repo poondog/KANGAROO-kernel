@@ -1659,7 +1659,7 @@ int msm_rpc_call_reply(struct msm_rpc_endpoint *ept, uint32_t proc,
 		       long timeout)
 {
 	struct rpc_request_hdr *req = _request;
-	struct rpc_reply_hdr *reply;
+	struct rpc_reply_hdr *reply = NULL;
 	int rc;
 
 	if (request_size < sizeof(*req))
@@ -1741,7 +1741,7 @@ int __msm_rpc_read(struct msm_rpc_endpoint *ept,
 {
 	struct rr_packet *pkt;
 	struct rpc_request_hdr *rq;
-	struct msm_rpc_reply *reply;
+	struct msm_rpc_reply *reply = NULL;
 	unsigned long flags;
 	int rc;
 

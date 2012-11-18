@@ -614,7 +614,7 @@ EXPORT_SYMBOL(journal_trans_will_send_data_barrier);
 
 int journal_next_log_block(journal_t *journal, unsigned int *retp)
 {
-	unsigned int blocknr;
+	unsigned int blocknr = 0;
 
 	spin_lock(&journal->j_state_lock);
 	J_ASSERT(journal->j_free > 1);
@@ -820,7 +820,7 @@ journal_t * journal_init_inode (struct inode *inode)
 	journal_t *journal = journal_init_common();
 	int err;
 	int n;
-	unsigned int blocknr;
+	unsigned int blocknr = 0;
 
 	if (!journal)
 		return NULL;
@@ -932,7 +932,7 @@ static int journal_reset(journal_t *journal)
  **/
 int journal_create(journal_t *journal)
 {
-	unsigned int blocknr;
+	unsigned int blocknr = 0;
 	struct buffer_head *bh;
 	journal_superblock_t *sb;
 	int i, err;
@@ -1128,14 +1128,6 @@ static int journal_get_superblock(journal_t *journal)
 		journal->j_maxlen = be32_to_cpu(sb->s_maxlen);
 	else if (be32_to_cpu(sb->s_maxlen) > journal->j_maxlen) {
 		printk (KERN_WARNING "JBD: journal file too short\n");
-		goto out;
-	}
-
-	if (be32_to_cpu(sb->s_first) == 0 ||
-	    be32_to_cpu(sb->s_first) >= journal->j_maxlen) {
-		printk(KERN_WARNING
-			"JBD: Invalid start block of journal: %u\n",
-			be32_to_cpu(sb->s_first));
 		goto out;
 	}
 

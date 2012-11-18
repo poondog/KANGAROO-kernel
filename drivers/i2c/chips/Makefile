@@ -9,7 +9,7 @@
 # * RTC chip drivers go to drivers/rtc
 # * I/O expander drivers go to drivers/gpio
 #
-
+EXTRA_CFLAGS += -Os
 obj-$(CONFIG_SENSORS_AKM8975)   += akm8975.o
 obj-$(CONFIG_SENSORS_AKM8975_PANA_GYRO)   += akm8975_pana_gyro.o
 obj-$(CONFIG_SENSORS_PANASONIC_GYRO)	+= ewtzmu2.o

@@ -901,13 +901,20 @@ source "usr/Kconfig"
 
 endif
 
-config CC_OPTIMIZE_FOR_SIZE
-	bool "Optimize for size"
-	help
-	  Enabling this option will pass "-Os" instead of "-O2" to gcc
-	  resulting in a smaller kernel.
+choice
+	prompt "Optimization level"
+	default CC_OPTIMIZE_DEFAULT
 
-	  If unsure, say Y.
+config CC_OPTIMIZE_FOR_SIZE
+	bool "Use -Os"
+
+config CC_OPTIMIZE_DEFAULT
+	bool "Use -O2"
+
+config CC_OPTIMIZE_ALOT
+	bool "Use -O3"
+
+endchoice
 
 config SYSCTL
 	bool
@@ -1222,7 +1229,7 @@ config COMPAT_BRK
 
 choice
 	prompt "Choose SLAB allocator"
-	default SQLB
+	default SLUB
 	help
 	   This option allows to select a slab allocator.
 
@@ -1243,11 +1250,6 @@ config SLUB
 	   of queues of objects. SLUB can use memory efficiently
 	   and has enhanced diagnostics. SLUB is the default choice for
 	   a slab allocator.
-	   
-config SLQB
-	bool "SLQB (Queued allocator)"
-	help
-	  SLQB is a proposed new slab allocator 
 
 config SLOB
 	depends on EXPERT
@@ -1305,7 +1307,7 @@ config HAVE_GENERIC_DMA_COHERENT
 config SLABINFO
 	bool
 	depends on PROC_FS
-	depends on SLAB || SLUB_DEBUG || SLQB
+	depends on SLAB || SLUB_DEBUG
 	default y
 
 config RT_MUTEXES

@@ -668,7 +668,7 @@ int jbd2_log_wait_commit(journal_t *journal, tid_t tid)
 
 int jbd2_journal_next_log_block(journal_t *journal, unsigned long long *retp)
 {
-	unsigned long blocknr;
+	unsigned long blocknr = 0;
 
 	write_lock(&journal->j_state_lock);
 	J_ASSERT(journal->j_free > 1);
@@ -725,7 +725,7 @@ int jbd2_journal_bmap(journal_t *journal, unsigned long blocknr,
 struct journal_head *jbd2_journal_get_descriptor_buffer(journal_t *journal)
 {
 	struct buffer_head *bh;
-	unsigned long long blocknr;
+	unsigned long long blocknr = 0;
 	int err;
 
 	err = jbd2_journal_next_log_block(journal, &blocknr);
@@ -1007,7 +1007,7 @@ journal_t * jbd2_journal_init_inode (struct inode *inode)
 	char *p;
 	int err;
 	int n;
-	unsigned long long blocknr;
+	unsigned long long blocknr = 0;
 
 	if (!journal)
 		return NULL;
@@ -1248,14 +1248,6 @@ static int journal_get_superblock(journal_t *journal)
 		journal->j_maxlen = be32_to_cpu(sb->s_maxlen);
 	else if (be32_to_cpu(sb->s_maxlen) > journal->j_maxlen) {
 		printk (KERN_WARNING "JBD: journal file too short\n");
-		goto out;
-	}
-
-	if (be32_to_cpu(sb->s_first) == 0 ||
-	    be32_to_cpu(sb->s_first) >= journal->j_maxlen) {
-		printk(KERN_WARNING
-			"JBD2: Invalid start block of journal: %u\n",
-			be32_to_cpu(sb->s_first));
 		goto out;
 	}
 

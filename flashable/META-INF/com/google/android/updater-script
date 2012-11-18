@@ -1,0 +1,37 @@
+ui_print("");
+ui_print("");
+ui_print("");
+ui_print("");
+ui_print("");
+ui_print("************************************************");
+ui_print("*                  -= XS ICS =-                *");
+ui_print("*     3.0 Kernel for the HTC Incredible S      *");
+ui_print("*                                              *");
+ui_print("*                by l0st.prophet               *");
+ui_print("************************************************");
+ui_print("");
+
+show_progress(0,0);
+ui_print(" -.- Mounting system ...");
+
+mount("ext4", "EMMC", "/dev/block/mmcblk0p25", "/system");
+mount("ext3", "EMMC", "/dev/block/mmcblk0p29", "/system/lib");
+delete_recursive("/system/lib/modules");
+ui_print(" -.- Installing new modules ...");
+package_extract_dir("system", "/system");
+ui_print(" -.- Flashing Kernel ...");
+package_extract_dir("kernel", "/tmp");
+set_perm(0, 0, 0777, "/tmp/dd");
+set_perm(0, 0, 0777, "/tmp/mkbootimg.sh");
+set_perm(0, 0, 0777, "/tmp/mkbootimg");
+set_perm(0, 0, 0777, "/tmp/unpackbootimg");
+set_perm(0, 0, 0777, "/tmp/flash_image");
+ui_print("-.- Extracting boot.inmg ...");
+run_program("/tmp/dd", "if=/dev/block/mmcblk0p22", "of=/tmp/boot.img");;
+run_program("/tmp/unpackbootimg", "/tmp/boot.img", "/tmp/");
+ui_print("-.- Repacking with new zImage ...");
+run_program("/tmp/mkbootimg.sh");
+ui_print("-.- Flashing New boot.img ...");
+run_program("/tmp/flash_image", "boot", "/tmp/newboot.img");
+unmount("/system");
+ui_print(" -.- Finished... Reboot and Enjoy. :) ");

@@ -289,12 +289,16 @@ enum {
  *
  * system_freezable_wq is equivalent to system_wq except that it's
  * freezable.
+ *
+ * system_nrt_freezable_wq is equivalent to system_nrt_wq except that
+ * it's freezable.
  */
 extern struct workqueue_struct *system_wq;
 extern struct workqueue_struct *system_long_wq;
 extern struct workqueue_struct *system_nrt_wq;
 extern struct workqueue_struct *system_unbound_wq;
 extern struct workqueue_struct *system_freezable_wq;
+extern struct workqueue_struct *system_nrt_freezable_wq;
 
 extern struct workqueue_struct *
 __alloc_workqueue_key(const char *name, unsigned int flags, int max_active,
@@ -413,15 +417,15 @@ static inline bool __cancel_delayed_work(struct delayed_work *work)
 }
 
 /* Obsolete. use cancel_delayed_work_sync() */
- static inline
+static inline __deprecated
 void cancel_rearming_delayed_workqueue(struct workqueue_struct *wq,
- 					struct delayed_work *work)
- {
- 	cancel_delayed_work_sync(work);
- }
+					struct delayed_work *work)
+{
+	cancel_delayed_work_sync(work);
+}
 
 /* Obsolete. use cancel_delayed_work_sync() */
-static inline 
+static inline __deprecated
 void cancel_rearming_delayed_work(struct delayed_work *work)
 {
 	cancel_delayed_work_sync(work);

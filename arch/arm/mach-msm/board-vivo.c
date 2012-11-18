@@ -2749,7 +2749,6 @@ static struct android_usb_platform_data android_usb_pdata = {
 };
 
 static struct platform_device android_usb_device = {
- 
 	.name	= "android_usb",
 	.id		= -1,
 	.dev		= {

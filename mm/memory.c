@@ -1228,16 +1228,24 @@ static inline unsigned long zap_pmd_range(struct mmu_gather *tlb,
 	do {
 		next = pmd_addr_end(addr, end);
 		if (pmd_trans_huge(*pmd)) {
-			if (next-addr != HPAGE_PMD_SIZE) {
+			if (next - addr != HPAGE_PMD_SIZE) {
 				VM_BUG_ON(!rwsem_is_locked(&tlb->mm->mmap_sem));
 				split_huge_page_pmd(vma->vm_mm, pmd);
 			} else if (zap_huge_pmd(tlb, vma, pmd))
-				continue;
+				goto next;
 			/* fall through */
 		}
-		if (pmd_none_or_clear_bad(pmd))
-			continue;
+		/*
+		 * Here there can be other concurrent MADV_DONTNEED or
+		 * trans huge page faults running, and if the pmd is
+		 * none or trans huge it can change under us. This is
+		 * because MADV_DONTNEED holds the mmap_sem in read
+		 * mode.
+		 */
+		if (pmd_none_or_trans_huge_or_clear_bad(pmd))
+			goto next;
 		next = zap_pte_range(tlb, vma, pmd, addr, next, details);
+next:
 		cond_resched();
 	} while (pmd++, addr = next, addr != end);
 
@@ -3759,7 +3767,7 @@ int generic_access_phys(struct vm_area_struct *vma, unsigned long addr,
 static int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
 		unsigned long addr, void *buf, int len, int write)
 {
-	struct vm_area_struct *vma;
+	struct vm_area_struct *vma = NULL;
 	void *old_buf = buf;
 
 	down_read(&mm->mmap_sem);
@@ -3857,7 +3865,7 @@ int access_process_vm(struct task_struct *tsk, unsigned long addr,
 void print_vma_addr(char *prefix, unsigned long ip)
 {
 	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
+	struct vm_area_struct *vma = NULL;
 
 	/*
 	 * Do not print if we are in atomic

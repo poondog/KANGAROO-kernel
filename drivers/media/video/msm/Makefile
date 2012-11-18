@@ -1,4 +1,5 @@
 GCC_VERSION      := $(shell $(CONFIG_SHELL) $(PWD)/scripts/gcc-version.sh $(CROSS_COMPILE)gcc)
+EXTRA_CFLAGS += -Os
 ifeq ($(GCC_VERSION),0404)
 CFLAGS_REMOVE_msm_vfe8x.o = -Wframe-larger-than=1024
 endif
