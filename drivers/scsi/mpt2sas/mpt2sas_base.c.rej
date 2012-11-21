@@ -1,0 +1,20 @@
+--- drivers/scsi/mpt2sas/mpt2sas_base.c
++++ drivers/scsi/mpt2sas/mpt2sas_base.c
+@@ -2140,10 +2140,13 @@
+ 	}
+ 
+ 	/* command line tunables  for max controller queue depth */
+-	if (max_queue_depth != -1)
+-		max_request_credit = (max_queue_depth < facts->RequestCredit)
+-		    ? max_queue_depth : facts->RequestCredit;
+-	else
++	if (max_queue_depth != -1 && max_queue_depth != 0) {
++		max_request_credit = min_t(u16, max_queue_depth +
++			ioc->hi_priority_depth + ioc->internal_depth,
++			facts->RequestCredit);
++		if (max_request_credit > MAX_HBA_QUEUE_DEPTH)
++			max_request_credit =  MAX_HBA_QUEUE_DEPTH;
++	} else
+ 		max_request_credit = min_t(u16, facts->RequestCredit,
+ 		    MAX_HBA_QUEUE_DEPTH);
+ 
