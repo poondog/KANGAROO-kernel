@@ -2413,7 +2413,14 @@ config REMOVE_EBI1_FIXED_CLK
 	default n
 	help
 		use for 2x Radio
-
+		
+config ROM_TYPE
+	bool "SYSFS interface to set misc parameters"
+	default y
+	help
+		A simple sysfs interface to define rom type
+		ex: sense vs aosp
+		
 config HTC_ACCESSORY_ONEWIRE
         tristate "HTC accessory one wire protocol driver"
         default n
