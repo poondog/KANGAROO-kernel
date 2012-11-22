@@ -66,6 +66,7 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <mach/gpio.h>
+#include <linux/romtype.h>
 #include <asm/atomic.h>
 atomic_t irq_cnt;
 #define CHECKED_COPY_FROM_USER(in) {					\
@@ -2244,7 +2245,15 @@ static void vfe31_process_camif_sof_irq(void)
 				VFE_CAMIF_COMMAND);
 		}
 	} /* if raw snapshot mode. */
+// 	vfe31_send_msg_no_payload(MSG_ID_SOF_ACK);
+if (rom_type == ROM_SENSE) 	{
 	vfe31_send_msg_no_payload(MSG_ID_SOF_ACK);
+		printk(KERN_INFO "[ANTHRAX] CAMERA: SENSE MODE");
+							}
+else						{
+		printk(KERN_INFO "[ANTHRAX] CAMERA: AOSP MODE");
+							}
+
 	vfe31_ctrl->vfeFrameId++;
 	/*CDBG("[CAM] camif_sof_irq, frameId = %d\n",
 		vfe31_ctrl->vfeFrameId);*/
