@@ -910,7 +910,7 @@ static irqreturn_t cy8c_ts_irq_thread(int irq, void *ptr)
 					ts->pre_finger_data[0] = finger_data[0][0];
 					ts->pre_finger_data[1] = finger_data[0][1];
 				}
-					}
+			}
 		}
 		if ((ts->unlock_page) &&
 			((ts->p_finger_count > ts->finger_count) ||
@@ -1141,7 +1141,7 @@ static int cy8c_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 	struct cy8c_ts_data *ts = i2c_get_clientdata(client);
 	uint8_t buf[2] = {0};
 
-		disable_irq_nosync(client->irq);
+	disable_irq_nosync(client->irq);
 
 	if (!ts->p_finger_count) {
 		if (ts->wake)
@@ -1165,7 +1165,7 @@ static int cy8c_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 	if (buf[0] & 0x70)
 		i2c_cy8c_write_byte_data(ts->client, 0x00, buf[0] & 0x8F);
 	mutex_lock(&cy8c_mutex);
-		i2c_cy8c_write_byte_data(ts->client, 0x00, (buf[0] & 0x8F) | 0x02);
+	i2c_cy8c_write_byte_data(ts->client, 0x00, (buf[0] & 0x8F) | 0x02);
 	ts->suspend = 1;
 	mutex_unlock(&cy8c_mutex);
 
@@ -1195,11 +1195,11 @@ static int cy8c_ts_resume(struct i2c_client *client)
 			printk(KERN_ERR "[TP] TOUCH_ERR: %s init failed\n",
 			__func__);
 
-		i2c_cy8c_write_byte_data(ts->client, 0x00, (buf[0] & 0x8F) | 0x04);
+	i2c_cy8c_write_byte_data(ts->client, 0x00, (buf[0] & 0x8F) | 0x04);
 
 	ts->unlock_page = 1;
 
-		enable_irq(client->irq);
+	enable_irq(client->irq);
 
 	return 0;
 }
