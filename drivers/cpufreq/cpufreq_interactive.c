@@ -79,7 +79,7 @@ static int ntarget_loads = ARRAY_SIZE(default_target_loads);
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
-#define DEFAULT_MIN_SAMPLE_TIME (80 * USEC_PER_MSEC)
+#define DEFAULT_MIN_SAMPLE_TIME (30 * USEC_PER_MSEC)
 static unsigned long min_sample_time = DEFAULT_MIN_SAMPLE_TIME;
 
 /*
@@ -98,7 +98,7 @@ static unsigned long above_hispeed_delay_val = DEFAULT_ABOVE_HISPEED_DELAY;
 /* Non-zero means indefinite speed boost active */
 static int boost_val;
 /* Duration of a boot pulse in usecs */
-static int boostpulse_duration_val = DEFAULT_MIN_SAMPLE_TIME;
+static int boostpulse_duration_val = 30000;
 /* End time of boost pulse in ktime converted to usecs */
 static u64 boostpulse_endtime;
 
