@@ -46,6 +46,7 @@ modules.builtin
 /System.map
 /Module.markers
 /Module.symvers
+/arch/arm/boot/compressed/piggy.xzkern
 
 #
 # git files that we don't want to ignore even it they are dot-files
