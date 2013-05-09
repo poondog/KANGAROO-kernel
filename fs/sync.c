@@ -143,6 +143,11 @@ SYSCALL_DEFINE1(syncfs, int, fd)
 	int ret;
 	int fput_needed;
 
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (!early_suspend_active)
+		return 0;
+#endif
+
 	file = fget_light(fd, &fput_needed);
 	if (!file)
 		return -EBADF;
@@ -259,6 +264,10 @@ SYSCALL_DEFINE1(fdatasync, unsigned int, fd)
  */
 int generic_write_sync(struct file *file, loff_t pos, loff_t count)
 {
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (!early_suspend_active)
+		return 0;
+#endif
 	if (!(file->f_flags & O_DSYNC) && !IS_SYNC(file->f_mapping->host))
 		return 0;
 	return vfs_fsync_range(file, pos, pos + count - 1,
