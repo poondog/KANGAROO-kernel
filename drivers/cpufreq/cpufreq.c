@@ -1024,9 +1024,6 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 #endif
 	if (!found)
 		policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
-	/* call driver. From then on the cpufreq must be able
-	 * to accept all calls to ->verify and ->setpolicy for this CPU
-	 */
 	ret = cpufreq_driver->init(policy);
 	if (ret) {
 		pr_debug("initialization failed\n");
@@ -1038,11 +1035,9 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
 				     CPUFREQ_START, policy);
 
-	ret = cpufreq_add_dev_policy(cpu, policy, sys_dev);
+	ret = cpufreq_add_dev_policy(cpu, policy, dev);
 	if (ret) {
 		if (ret > 0)
-			/* This is a managed cpu, symlink created,
-			   exit with 0 */
 			ret = 0;
 		goto err_unlock_policy;
 	}

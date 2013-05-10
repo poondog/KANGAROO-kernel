@@ -169,6 +169,12 @@ config CPU_FREQ_DEFAULT_GOV_SCARY
 	help
 		Use the CPUFreq governor 'scary' as default.	
 
+config CPU_FREQ_DEFAULT_GOV_SMARTMAX
+	bool "smartmax"
+	select CPU_FREQ_GOV_SMARTMAX
+	help
+	  Use the CPUFreq governor 'smartmax' as default
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
