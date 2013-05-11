@@ -169,6 +169,12 @@ config CPU_FREQ_DEFAULT_GOV_SCARY
 	help
 		Use the CPUFreq governor 'scary' as default.	
 
+config CPU_FREQ_DEFAULT_GOV_SMARTMAX
+	bool "smartmax"
+	select CPU_FREQ_GOV_SMARTMAX
+	help
+	  Use the CPUFreq governor 'smartmax' as default
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -264,6 +270,12 @@ config CPU_FREQ_GOV_LIONHEART
 	depends on CPU_FREQ
 	help 
 	   'Use Lionheart' 
+
+config CPU_FREQ_GOV_SMARTMAX
+	tristate "'smartmax' cpufreq policy governor"
+	select CPU_FREQ_TABLE
+	help
+	  'smartmax' combined ondemand and smartass2
 
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"

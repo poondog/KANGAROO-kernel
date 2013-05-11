@@ -387,6 +387,9 @@ extern struct cpufreq_governor cpufreq_gov_intellidemand;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SCARY)
 extern struct cpufreq_governor cpufreq_gov_scary;
 #define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_scary)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX)
+extern struct cpufreq_governor cpufreq_gov_smartmax;
+#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_smartmax)
 #endif
 
 
