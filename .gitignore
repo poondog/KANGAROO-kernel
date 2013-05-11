@@ -46,7 +46,6 @@ modules.builtin
 /System.map
 /Module.markers
 /Module.symvers
-/arch/arm/boot/compressed/piggy.xzkern
 
 #
 # git files that we don't want to ignore even it they are dot-files
@@ -78,6 +77,13 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+
+#specific file output
+arch/arm/boot/compressed/lib1funcs.S
+arch/arm/boot/compressed/ashldi3.S
+arch/arm/boot/compressed/piggy.gzip
+arch/arm/boot/compressed/piggy.xzkern
+arch/arm/boot/compressed/vmlinux
 
 *.orig
 *~
