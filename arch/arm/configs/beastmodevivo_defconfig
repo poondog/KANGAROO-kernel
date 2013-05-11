@@ -2506,7 +2506,7 @@ CONFIG_MACH_NO_WESTBRIDGE=y
 # Altera FPGA firmware download module
 #
 # CONFIG_ALTERA_STAPL is not set
-
+CONFIG_CPUPOWER=y
 #
 # Qualcomm MSM specific device drivers
 #
