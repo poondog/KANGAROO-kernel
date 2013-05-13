@@ -1,7 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 0
-SUBLEVEL = 51
-EXTRAVERSION = -rc1
+SUBLEVEL = 52
+EXTRAVERSION =
 NAME = Sneaky Weasel
 
 # *DOCUMENTATION*
@@ -248,9 +248,19 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
 
+ifdef CONFIG_CC_OPTIMIZE_ALOT
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer
+HOSTCXXFLAGS = -O3 -fno-tree-vectorize 
+else
+ifdef CONFIG_CC_OPTIMIZE_FAST
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer
+HOSTCXXFLAGS = -Ofast -fno-tree-vectorize 
+else
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
+HOSTCXXFLAGS = -O2 -fno-tree-vectorize 
+endif
+endif
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
 
@@ -370,19 +380,25 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
                    $(if $(KBUILD_SRC), -I$(srctree)/include) \
                    -include include/generated/autoconf.h
 
-KBUILD_CPPFLAGS := -D__KERNEL__
+ KBUILD_CPPFLAGS := -D__KERNEL__ -Wno-unused-but-set-variable \
+ -Wno-error=unused-value -Wno-error=switch -Wno-error=uninitialized -Wno-error=address \
+ -Wno-error=enum-compare -Wno-error=parentheses -Wno-error=array-bounds -Wno-unused-variable
 
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
-		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
-KBUILD_AFLAGS_KERNEL :=
-KBUILD_CFLAGS_KERNEL :=
-KBUILD_AFLAGS   := -D__ASSEMBLY__
-KBUILD_AFLAGS_MODULE  := -DMODULE
-KBUILD_CFLAGS_MODULE  := -DMODULE
-KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
+ KBUILD_CFLAGS   := -Wundef -Wstrict-prototypes -Wno-trigraphs \
+            -fno-strict-aliasing -fno-common \
+            -Werror-implicit-function-declaration \
+            -Wno-format-security \
+            -fno-delete-null-pointer-checks -mno-unaligned-access -mtune=cortex-a15 \
+            -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
+            -fipa-cp-clone -fsingle-precision-constant -pipe \
+            -funswitch-loops -O3
+
+ KBUILD_AFLAGS_KERNEL :=
+ KBUILD_CFLAGS_KERNEL :=
+ KBUILD_AFLAGS   := -D__ASSEMBLY__
+ KBUILD_AFLAGS_MODULE  := -DMODULE
+ KBUILD_CFLAGS_MODULE  := -DMODULE
+ KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
