@@ -34,7 +34,6 @@
 #include <linux/workqueue.h>
 #include <linux/moduleparam.h>
 #include <linux/jiffies.h>
-#include <asm/cputime.h>
 #include <linux/earlysuspend.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
@@ -66,29 +65,38 @@ extern int tegra_input_boost (int cpu, unsigned int target_freq);
 #define DEFAULT_MAX_CPU_LOAD 80
 #define DEFAULT_MIN_CPU_LOAD 50
 #define DEFAULT_UP_RATE 30000
-#define DEFAULT_DOWN_RATE 30000
+#define DEFAULT_DOWN_RATE 60000
 #define DEFAULT_SAMPLING_RATE 30000
+// default to 3 * sampling_rate
 #define DEFAULT_INPUT_BOOST_DURATION 90000
 #define DEFAULT_TOUCH_POKE_FREQ 910000
 #define DEFAULT_BOOST_FREQ 910000
-#define DEFAULT_IO_IS_BUSY 1
+/*
+ * from cpufreq_wheatley.c
+ * Not all CPUs want IO time to be accounted as busy; this dependson how
+ * efficient idling at a higher frequency/voltage is.
+ * Pavel Machek says this is not so for various generations of AMD and old
+ * Intel systems.
+ * Mike Chan (androidlcom) calis this is also not true for ARM.
+ */
+#define DEFAULT_IO_IS_BUSY 0
 #define DEFAULT_IGNORE_NICE 1
 #endif
 
 #ifdef CONFIG_CPU_FREQ_GOV_SMARTMAX_PRIMOU
-#define DEFAULT_SUSPEND_IDEAL_FREQ 368640
+#define DEFAULT_SUSPEND_IDEAL_FREQ 368000
 #define DEFAULT_AWAKE_IDEAL_FREQ 768000
 #define DEFAULT_RAMP_UP_STEP 200000
 #define DEFAULT_RAMP_DOWN_STEP 200000
 #define DEFAULT_MAX_CPU_LOAD 99
 #define DEFAULT_MIN_CPU_LOAD 80
 #define DEFAULT_UP_RATE 30000
-#define DEFAULT_DOWN_RATE 30000
+#define DEFAULT_DOWN_RATE 60000
 #define DEFAULT_SAMPLING_RATE 30000
 #define DEFAULT_INPUT_BOOST_DURATION 90000
 #define DEFAULT_TOUCH_POKE_FREQ 768000
 #define DEFAULT_BOOST_FREQ 768000
-#define DEFAULT_IO_IS_BUSY 1
+#define DEFAULT_IO_IS_BUSY 0
 #define DEFAULT_IGNORE_NICE 1
 #endif
 
@@ -100,12 +108,12 @@ extern int tegra_input_boost (int cpu, unsigned int target_freq);
 #define DEFAULT_MAX_CPU_LOAD 70
 #define DEFAULT_MIN_CPU_LOAD 40
 #define DEFAULT_UP_RATE 30000
-#define DEFAULT_DOWN_RATE 30000
+#define DEFAULT_DOWN_RATE 60000
 #define DEFAULT_SAMPLING_RATE 30000
 #define DEFAULT_INPUT_BOOST_DURATION 90000
 #define DEFAULT_TOUCH_POKE_FREQ 1134000
 #define DEFAULT_BOOST_FREQ 1134000
-#define DEFAULT_IO_IS_BUSY 1
+#define DEFAULT_IO_IS_BUSY 0
 #define DEFAULT_IGNORE_NICE 1
 #endif
 
@@ -186,11 +194,11 @@ struct smartmax_info_s {
 	struct cpufreq_policy *cur_policy;
 	struct cpufreq_frequency_table *freq_table;
 	struct delayed_work work;
-	cputime64_t prev_cpu_idle;
-	cputime64_t prev_cpu_iowait;
-	cputime64_t prev_cpu_wall;
-	cputime64_t prev_cpu_nice;
-	cputime64_t freq_change_time;
+	u64 prev_cpu_idle;
+	u64 prev_cpu_iowait;
+	u64 prev_cpu_wall;
+	u64 prev_cpu_nice;
+	u64 freq_change_time;
 	unsigned int cur_cpu_load;
 	unsigned int old_freq;
 	int ramp_dir;
@@ -243,7 +251,7 @@ extern int tegra_input_boost(int cpu, unsigned int target_freq);
 
 static bool boost_task_alive = false;
 static struct task_struct *boost_task;
-static cputime64_t boost_end_time = 0ULL;
+static u64 boost_end_time = 0;
 static unsigned int cur_boost_freq = 0;
 static unsigned int cur_boost_duration = 0;
 static bool boost_running = false;
@@ -285,8 +293,7 @@ struct cpufreq_governor cpufreq_gov_smartmax = {
     .owner = THIS_MODULE,
     };
 
-static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu,
-		u64 *wall) {
+static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall) {
 
 	u64 idle_time;
 	u64 cur_wall_time;
@@ -326,8 +333,7 @@ static inline u64 get_cpu_idle_time(unsigned int cpu, u64 *wall) {
 	return idle_time;
 }
 
-static inline u64 get_cpu_iowait_time(unsigned int cpu,
-		u64 *wall) {
+static inline u64 get_cpu_iowait_time(unsigned int cpu, u64 *wall) {
 	u64 iowait_time = get_cpu_iowait_time_us(cpu, wall);
 
 	if (iowait_time == -1ULL)
@@ -534,12 +540,12 @@ static void cpufreq_smartmax_timer(struct smartmax_info_s *this_smartmax) {
 
 #if SMARTMAX_STAT 
 	unsigned int cpu = this_smartmax->cpu;
-    u64 diff = 0;
-    
-    if (timer_stat[cpu])
-        diff = now - timer_stat[cpu];
-        
-    timer_stat[cpu] = now;
+	u64 diff = 0;
+
+	if (timer_stat[cpu])
+		diff = now - timer_stat[cpu];
+
+	timer_stat[cpu] = now;
 	printk(KERN_DEBUG "[smartmax]:cpu %d %lld\n", cpu, diff);
 #endif
 
@@ -599,11 +605,7 @@ static void cpufreq_smartmax_timer(struct smartmax_info_s *this_smartmax) {
 		 * the system is actually idle. So subtract the iowait time
 		 * from the cpu idle time.
 		 */
-
 		if (io_is_busy && idle_time >= iowait_time)
-			idle_time -= iowait_time;
-
-		if (idle_time >= iowait_time)
 			idle_time -= iowait_time;
 
 		if (unlikely(!wall_time || wall_time < idle_time))
@@ -636,19 +638,21 @@ static void cpufreq_smartmax_timer(struct smartmax_info_s *this_smartmax) {
 		return;
 
 	// boost - but not block ramp up steps based on load if requested
-	if (boost_running && time_before64 (now, boost_end_time)) {
-		dprintk(SMARTMAX_DEBUG_BOOST, "%d: boost running %llu %llu\n", cur, now, boost_end_time);
+	if (boost_running){
+		if (now < boost_end_time) {
+			dprintk(SMARTMAX_DEBUG_BOOST, "%d: cpu %d boost running %llu %llu\n", cur, cpu, now, boost_end_time);
 		
-		if (this_smartmax->ramp_dir == -1)
-			return;
-		else {
-			if (ramp_up_during_boost)
-				dprintk(SMARTMAX_DEBUG_BOOST, "%d: boost running but ramp_up above boost freq requested\n", cur);
-			else
+			if (this_smartmax->ramp_dir == -1)
 				return;
-		}
-	} else
-		boost_running = false;
+			else {
+				if (ramp_up_during_boost)
+					dprintk(SMARTMAX_DEBUG_BOOST, "%d: cpu %d boost running but ramp_up above boost freq requested\n", cur, cpu);
+				else
+					return;
+			}
+		} else
+			boost_running = false;
+	}
 
 	cpufreq_smartmax_freq_change(this_smartmax);
 }
@@ -1085,14 +1089,18 @@ static struct attribute * smartmax_attributes[] = {
 	&min_sampling_rate_attr.attr,
 	NULL , };
 
-static struct attribute_group smartmax_attr_group = { .attrs =
-		smartmax_attributes, .name = "smartmax", };
+static struct attribute_group smartmax_attr_group = { 
+	.attrs = smartmax_attributes, 
+	.name = "smartmax", 
+	};
 
 static int cpufreq_smartmax_boost_task(void *data) {
 	struct smartmax_info_s *this_smartmax;
 	u64 now;
 #ifndef CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA
 	struct cpufreq_policy *policy;
+	unsigned int cpu;
+	bool start_boost = false;
 #endif
 	while (1) {
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -1106,48 +1114,56 @@ static int cpufreq_smartmax_boost_task(void *data) {
 		if (boost_running)
 			continue;
 
-		/* we always boost cpu 0 */
+#ifdef CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA
+		/* on tegra there is only one cpu clock so we only need to boost cpu 0 
+		   all others will run at the same speed */
 		this_smartmax = &per_cpu(smartmax_info, 0);
 		if (!this_smartmax)
 			continue;
 
-#ifdef CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA
 		if (tegra_input_boost(0, cur_boost_freq) < 0) {
 			continue;
 		}
-
-		boost_running = true;
-
-		now = ktime_to_us(ktime_get());
-		boost_end_time = now + cur_boost_duration;
-		dprintk(SMARTMAX_DEBUG_BOOST, "%s %llu %llu\n", __func__, now, boost_end_time);
 	
         this_smartmax->prev_cpu_idle = get_cpu_idle_time(0,
 						&this_smartmax->prev_cpu_wall);
 #else
-		policy = this_smartmax->cur_policy;
-		if (!policy)
-			continue;
+		for_each_online_cpu(cpu){
+			this_smartmax = &per_cpu(smartmax_info, cpu);
+			if (!this_smartmax)
+				continue;
 
-		if (lock_policy_rwsem_write(0) < 0)
-			continue;
+			policy = this_smartmax->cur_policy;
+			if (!policy)
+				continue;
 
-		mutex_lock(&this_smartmax->timer_mutex);
+			if (lock_policy_rwsem_write(cpu) < 0)
+				continue;
 
-		if (policy->cur < cur_boost_freq) {
-			boost_running = true;
-		
-			now = ktime_to_ns(ktime_get());
-			boost_end_time = now + cur_boost_duration;
-			dprintk(SMARTMAX_DEBUG_BOOST, "%s %llu %llu\n", __func__, now, boost_end_time);
+			mutex_lock(&this_smartmax->timer_mutex);
 
-			target_freq(policy, this_smartmax, cur_boost_freq, this_smartmax->old_freq, CPUFREQ_RELATION_H);
-			this_smartmax->prev_cpu_idle = get_cpu_idle_time(0, &this_smartmax->prev_cpu_wall);
+			if (policy->cur < cur_boost_freq) {
+				start_boost = true;
+				target_freq(policy, this_smartmax, cur_boost_freq, this_smartmax->old_freq, CPUFREQ_RELATION_H);
+				this_smartmax->prev_cpu_idle = get_cpu_idle_time(cpu, &this_smartmax->prev_cpu_wall);
+			}
+			mutex_unlock(&this_smartmax->timer_mutex);
+
+			unlock_policy_rwsem_write(cpu);
 		}
-		mutex_unlock(&this_smartmax->timer_mutex);
-				
-		unlock_policy_rwsem_write(0);
+#endif
 
+#ifndef CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA
+		if (start_boost) {
+#endif
+
+		boost_running = true;
+		now = ktime_to_us(ktime_get());
+		boost_end_time = now + (cur_boost_duration * num_online_cpus());
+		dprintk(SMARTMAX_DEBUG_BOOST, "%s %llu %llu\n", __func__, now, boost_end_time);
+		
+#ifndef CONFIG_CPU_FREQ_GOV_SMARTMAX_TEGRA
+		}
 #endif
 	}
 
@@ -1222,9 +1238,13 @@ static void dbs_input_disconnect(struct input_handle *handle) {
 
 static const struct input_device_id dbs_ids[] = { { .driver_info = 1 }, { }, };
 
-static struct input_handler dbs_input_handler = { .event = dbs_input_event,
-		.connect = dbs_input_connect, .disconnect = dbs_input_disconnect,
-		.name = "cpufreq_smartmax", .id_table = dbs_ids, };
+static struct input_handler dbs_input_handler = { 
+	.event = dbs_input_event,
+	.connect = dbs_input_connect, 
+	.disconnect = dbs_input_disconnect,
+	.name = "cpufreq_smartmax", 
+	.id_table = dbs_ids, 
+	};
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void smartmax_early_suspend(struct early_suspend *h)
@@ -1304,12 +1324,12 @@ static int cpufreq_governor_smartmax(struct cpufreq_policy *new_policy,
 #ifdef CONFIG_HAS_EARLYSUSPEND
 			register_early_suspend(&smartmax_early_suspend_handler);
 #endif
-            /* policy latency is in nS. Convert it to uS first */
+			/* policy latency is in nS. Convert it to uS first */
 			latency = new_policy->cpuinfo.transition_latency / 1000;
 			if (latency == 0)
 				latency = 1;
-			
-            /* Bring kernel and HW constraints together */
+
+			/* Bring kernel and HW constraints together */
 			min_sampling_rate = max(min_sampling_rate, MIN_LATENCY_MULTIPLIER * latency);
 			sampling_rate = max(min_sampling_rate, sampling_rate);
 		}
@@ -1324,12 +1344,12 @@ static int cpufreq_governor_smartmax(struct cpufreq_policy *new_policy,
 		smartmax_update_min_max(this_smartmax,new_policy);
 
 		if (this_smartmax->cur_policy->cur > new_policy->max) {
-			dprintk(SMARTMAX_DEBUG_JUMPS,"jumping to new max freq: %d\n",new_policy->max);
+			dprintk(SMARTMAX_DEBUG_JUMPS,"CPUFREQ_GOV_LIMITS jumping to new max freq: %d\n",new_policy->max);
 			__cpufreq_driver_target(this_smartmax->cur_policy,
 					new_policy->max, CPUFREQ_RELATION_H);
 		}
 		else if (this_smartmax->cur_policy->cur < new_policy->min) {
-			dprintk(SMARTMAX_DEBUG_JUMPS,"jumping to new min freq: %d\n",new_policy->min);
+			dprintk(SMARTMAX_DEBUG_JUMPS,"CPUFREQ_GOV_LIMITS jumping to new min freq: %d\n",new_policy->min);
 			__cpufreq_driver_target(this_smartmax->cur_policy,
 					new_policy->min, CPUFREQ_RELATION_L);
 		}
