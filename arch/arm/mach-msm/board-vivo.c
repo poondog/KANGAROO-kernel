@@ -5782,7 +5782,7 @@ static void __init vivo_allocate_memory_regions(void)
 	unsigned long size;
 
 	size = MSM_FB_SIZE;
-	msm_fb_resources[0].start = MSM_FB_BASE;
+	msm_fb_resources[0].start = MSM_FB_BASE + 0x10000000;
 	msm_fb_resources[0].end = msm_fb_resources[0].start + size - 1;
 	pr_info("allocating %lu bytes at 0x%p (0x%lx physical) for fb\n",
 		size, __va(MSM_FB_BASE), (unsigned long) MSM_FB_BASE);
