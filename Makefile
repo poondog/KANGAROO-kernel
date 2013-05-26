@@ -392,7 +392,7 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
             -fno-strict-aliasing -fno-common \
             -Werror-implicit-function-declaration \
             -Wno-format-security \
-            -fno-delete-null-pointer-checks -mno-unaligned-access -mtune=cortex-a15 \
+            -fno-delete-null-pointer-checks -mno-unaligned-access -mtune=cortex-a8 \
             -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
             -fipa-cp-clone -fsingle-precision-constant -pipe \
             -funswitch-loops -O3
