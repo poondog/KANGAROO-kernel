@@ -442,6 +442,14 @@ void kgsl_timestamp_expired(struct work_struct *work)
 
 	device->last_expired_ctxt_id = KGSL_CONTEXT_INVALID;
 
+	/* Mark the next pending event */
+	if (!list_empty(&device->events) && device->ftbl->next_event) {
+		event = list_first_entry(&device->events, struct kgsl_event,
+			list);
+
+		device->ftbl->next_event(device, event);
+	}
+
 	mutex_unlock(&device->mutex);
 }
 EXPORT_SYMBOL(kgsl_timestamp_expired);
