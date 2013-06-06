@@ -392,10 +392,12 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
             -fno-strict-aliasing -fno-common \
             -Werror-implicit-function-declaration \
             -Wno-format-security \
-            -fno-delete-null-pointer-checks -mno-unaligned-access -mtune=cortex-a8 \
+            -fno-delete-null-pointer-checks -mno-unaligned-access \
+            -mtune=cortex-a8 -mfpu=neon-vfpv4 \
             -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
             -fipa-cp-clone -fsingle-precision-constant -pipe \
-            -funswitch-loops -O3
+            -funswitch-loops -floop-interchange -floop-strip-mine -floop-block -O3 \
+            -funsafe-math-optimizations -ftree-vectorize -ftree-partial-pre
 
  KBUILD_AFLAGS_KERNEL :=
  KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -funswitch-loops
