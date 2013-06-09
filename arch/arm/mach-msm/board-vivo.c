@@ -3408,7 +3408,7 @@ static int msm_hsusb_ldo_set_voltage(int mV)
 static int phy_init_seq[] = { 0x06, 0x36, 0x0C, 0x31, 0x31, 0x32, 0x1, 0x0D, 0x1, 0x10, -1 };
 static struct msm_otg_platform_data msm_otg_pdata = {
 	.phy_init_seq		= phy_init_seq,
-	.mode			= USB_PERIPHERAL,
+	.mode			= USB_OTG,
 	.otg_control		= OTG_PMIC_CONTROL,
 	.power_budget		= 750,
 	.phy_type		= CI_45NM_INTEGRATED_PHY,
@@ -4064,6 +4064,7 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_nand,
 #endif
 	&msm_device_otg,
+	&msm_device_hsusb_host,
 	&qsd_device_spi,
 #ifdef CONFIG_MSM_SSBI
 	&msm_device_ssbi_pmic1,
