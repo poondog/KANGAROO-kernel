@@ -1,7 +1,9 @@
 /*
  * Base from Chad Goodman, chad.goodman@gmail.com
  * modifications to base from faux123
- * Copyright 2012 Chad Goodman
+ * Copyright 2013 Chad Goodman/faux123
+ * 
+ * I don't know who the original developer is, so I credit both
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -22,22 +24,26 @@
 
 #include <linux/writeback.h>
 
-#define DYN_FSYNC_VERSION 2
+#define DYN_FSYNC_VERSION_MAJOR 1
+#define DYN_FSYNC_VERSION_MINOR 1
 
 /*
- * fsync_mutex protects dyn_fsync_active during early suspend / lat resume transitions
+ * fsync_mutex protects dyn_fsync_active during early suspend / late resume
+ * transitions
  */
 static DEFINE_MUTEX(fsync_mutex);
 
-bool early_suspend_active = false;
-static bool dyn_fsync_active = true;
+bool early_suspend_active __read_mostly = false;
+bool dyn_fsync_active __read_mostly = true;
 
-static ssize_t dyn_fsync_active_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+static ssize_t dyn_fsync_active_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
 {
 	return sprintf(buf, "%u\n", (dyn_fsync_active ? 1 : 0));
 }
 
-static ssize_t dyn_fsync_active_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+static ssize_t dyn_fsync_active_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int data;
 
@@ -58,24 +64,30 @@ static ssize_t dyn_fsync_active_store(struct kobject *kobj, struct kobj_attribut
 	return count;
 }
 
-static ssize_t dyn_fsync_version_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+static ssize_t dyn_fsync_version_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
 {
-	return sprintf(buf, "version: %u\n", DYN_FSYNC_VERSION);
+	return sprintf(buf, "version: %u.%u by faux123\n",
+		DYN_FSYNC_VERSION_MAJOR,
+		DYN_FSYNC_VERSION_MINOR);
 }
 
-static ssize_t dyn_fsync_earlysuspend_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+static ssize_t dyn_fsync_earlysuspend_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
 {
 	return sprintf(buf, "early suspend active: %u\n", early_suspend_active);
 }
 
 static struct kobj_attribute dyn_fsync_active_attribute = 
-	__ATTR(Dyn_fsync_active, 0666, dyn_fsync_active_show, dyn_fsync_active_store);
+	__ATTR(Dyn_fsync_active, 0666,
+		dyn_fsync_active_show,
+		dyn_fsync_active_store);
 
 static struct kobj_attribute dyn_fsync_version_attribute = 
-	__ATTR(Dyn_fsync_version, 0444 , dyn_fsync_version_show, NULL);
+	__ATTR(Dyn_fsync_version, 0444, dyn_fsync_version_show, NULL);
 
 static struct kobj_attribute dyn_fsync_earlysuspend_attribute = 
-	__ATTR(Dyn_fsync_earlysuspend, 0444 , dyn_fsync_earlysuspend_show, NULL);
+	__ATTR(Dyn_fsync_earlysuspend, 0444, dyn_fsync_earlysuspend_show, NULL);
 
 static struct attribute *dyn_fsync_active_attrs[] =
 	{
@@ -133,7 +145,8 @@ static int dyn_fsync_init(void)
 		return -ENOMEM;
         }
 
-	sysfs_result = sysfs_create_group(dyn_fsync_kobj, &dyn_fsync_active_attr_group);
+	sysfs_result = sysfs_create_group(dyn_fsync_kobj,
+			&dyn_fsync_active_attr_group);
 
         if (sysfs_result) {
 		pr_info("%s dyn_fsync sysfs create failed!\n", __FUNCTION__);
@@ -152,7 +165,3 @@ static void dyn_fsync_exit(void)
 
 module_init(dyn_fsync_init);
 module_exit(dyn_fsync_exit);
-
-MODULE_AUTHOR("Chad Goodman <chad.goodman@gmail.com>");
-MODULE_DESCRIPTION("F/Sync Control");
-MODULE_LICENSE("GPL");
