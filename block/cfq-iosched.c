@@ -20,18 +20,18 @@
  * tunables
  */
 /* max queue in one round of service */
-static const int cfq_quantum = 8;
-static const int cfq_fifo_expire[2] = { HZ / 4, HZ / 8 };
+static const int cfq_quantum = 4;
+static const int cfq_fifo_expire[2] = { 80, 330};
 /* maximum backwards seek, in KiB */
-static const int cfq_back_max = 16 * 1024;
+static const int cfq_back_max = 12582912;
 /* penalty of a backwards seek */
-static const int cfq_back_penalty = 2;
-static const int cfq_slice_sync = HZ / 10;
-static int cfq_slice_async = HZ / 25;
+static const int cfq_back_penalty = 1;
+static const int cfq_slice_sync = 60;
+static int cfq_slice_async = 50;
 static const int cfq_slice_async_rq = 2;
-static int cfq_slice_idle = HZ / 125;
-static int cfq_group_idle = HZ / 125;
-static const int cfq_target_latency = HZ * 3/10; /* 300 ms */
+static int cfq_slice_idle = 0;
+static int cfq_group_idle = 0;
+static const int cfq_target_latency = 300; /* 300 ms */
 static const int cfq_hist_divisor = 4;
 
 /*
@@ -1283,7 +1283,6 @@ static void cfq_service_tree_add(struct cfq_data *cfqd, struct cfq_queue *cfqq,
 
 	service_tree = service_tree_for(cfqq->cfqg, cfqq_prio(cfqq),
 						cfqq_type(cfqq));
-	BUG_ON(service_tree == NULL);
 	if (cfq_class_idle(cfqq)) {
 		rb_key = CFQ_IDLE_DELAY;
 		parent = rb_last(&service_tree->rb);
@@ -2168,10 +2167,7 @@ static enum wl_type_t cfq_choose_wl(struct cfq_data *cfqd,
 
 	for (i = 0; i <= SYNC_WORKLOAD; ++i) {
 		/* select the one with lowest rb_key */
-		struct cfq_rb_root *service_tree;
-		service_tree = service_tree_for(cfqg, prio, i);
-		BUG_ON(service_tree == NULL);
-		queue = cfq_rb_first(service_tree);
+		queue = cfq_rb_first(service_tree_for(cfqg, prio, i));
 		if (queue &&
 		    (!key_valid || time_before(queue->rb_key, lowest_key))) {
 			lowest_key = queue->rb_key;
@@ -2211,7 +2207,6 @@ static void choose_service_tree(struct cfq_data *cfqd, struct cfq_group *cfqg)
 	 * expiration time
 	 */
 	st = service_tree_for(cfqg, cfqd->serving_prio, cfqd->serving_type);
-	BUG_ON(st == NULL);
 	count = st->count;
 
 	/*
@@ -2279,7 +2274,7 @@ static struct cfq_group *cfq_get_next_cfqg(struct cfq_data *cfqd)
 static void cfq_choose_cfqg(struct cfq_data *cfqd)
 {
 	struct cfq_group *cfqg = cfq_get_next_cfqg(cfqd);
-	BUG_ON(cfqg == NULL);
+
 	cfqd->serving_group = cfqg;
 
 	/* Restore the workload type data */
@@ -3216,12 +3211,12 @@ retry:
 
 out:
 	/*
-	* test_and_clear_bit() implies a memory barrier, paired with
-	* the wmb() in fs/ioprio.c, so the value seen for ioprio is the
-	* new one.
-	*/
+	 * test_and_clear_bit() implies a memory barrier, paired with
+	 * the wmb() in fs/ioprio.c, so the value seen for ioprio is the
+	 * new one.
+	 */
 	if (unlikely(test_and_clear_bit(IOC_CFQ_IOPRIO_CHANGED,
-		ioc->ioprio_changed)))
+					ioc->ioprio_changed)))
 		cfq_ioc_set_ioprio(ioc);
 
 #ifdef CONFIG_CFQ_GROUP_IOSCHED
@@ -4256,20 +4251,6 @@ static struct blkio_policy_type blkio_policy_cfq;
 
 static int __init cfq_init(void)
 {
-	/*
-	 * could be 0 on HZ < 1000 setups
-	 */
-	if (!cfq_slice_async)
-		cfq_slice_async = 1;
-	if (!cfq_slice_idle)
-		cfq_slice_idle = 1;
-
-#ifdef CONFIG_CFQ_GROUP_IOSCHED
-	if (!cfq_group_idle)
-		cfq_group_idle = 1;
-#else
-		cfq_group_idle = 0;
-#endif
 	if (cfq_slab_setup())
 		return -ENOMEM;
 
