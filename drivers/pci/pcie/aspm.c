@@ -610,6 +610,9 @@ void pcie_aspm_init_link_state(struct pci_dev *pdev)
 	/* Setup initial Clock PM state */
 	pcie_clkpm_cap_init(link, blacklist);
 
+	if (aspm_force)
+		return;
+
 	/*
 	 * At this stage drivers haven't had an opportunity to change the
 	 * link policy setting. Enabling ASPM on broken hardware can cripple
