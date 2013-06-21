@@ -195,9 +195,5 @@ enum rq_flag_bits {
 #define REQ_IO_STAT		(1 << __REQ_IO_STAT)
 #define REQ_MIXED_MERGE		(1 << __REQ_MIXED_MERGE)
 #define REQ_SECURE		(1 << __REQ_SECURE)
-/* Modified by Memory, Studio Software for Zimmer */
-#if defined(CONFIG_ZIMMER)
-	#define REQ_SWAPIN_DMPG	(1 << __REQ_SWAPIN_DMPG)
-#endif
 
 #endif /* __LINUX_BLK_TYPES_H */
