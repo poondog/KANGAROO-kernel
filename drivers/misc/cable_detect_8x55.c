@@ -188,7 +188,6 @@ static void send_usb_host_connect_notify(int cable_in)
 			CABLE_INFO("[HostNotify] Send to: %s: %d\n",
 					notifier->name, cable_in);
 			/* Notify other drivers about connect type. */
-			/* use slow charging for unknown type*/
 			notifier->func(cable_in);
 		}
 	}
