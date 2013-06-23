@@ -3998,27 +3998,27 @@ static struct platform_device *headset_devices[] = {
 static struct headset_adc_config htc_headset_mgr_config[] = {
 	{
 		.type = HEADSET_MIC,
-		.adc_max = 27713,
-		.adc_min = 22092,
+		.adc_max = 55426,
+		.adc_min = 38237,
 	},
 	{
 		.type = HEADSET_BEATS,
-		.adc_max = 22091,
-		.adc_min = 16271,
+		.adc_max = 38236,
+		.adc_min = 30586,
 	},
 	{
 		.type = HEADSET_BEATS_SOLO,
-		.adc_max = 16270,
-		.adc_min = 10045,
+		.adc_max = 30585,
+		.adc_min = 20292,
 	},
 	{
-		.type = HEADSET_INDICATOR,
-		.adc_max = 10044,
-		.adc_min = 4523,
+		.type = HEADSET_NO_MIC, /* HEADSET_INDICATOR */
+		.adc_max = 20291,
+		.adc_min = 7285,
 	},
 	{
 		.type = HEADSET_NO_MIC,
-		.adc_max = 4522,
+		.adc_max = 7284,
 		.adc_min = 0,
 	},
 };
