@@ -1,0 +1,133 @@
+diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+index 03b2938..f2ef422 100644
+--- a/drivers/cpufreq/cpufreq.c
++++ b/drivers/cpufreq/cpufreq.c
+@@ -299,8 +299,23 @@ void cpufreq_notify_transition(struct cpufreq_freqs *freqs, unsigned int state)
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(cpufreq_notify_transition);
++/**
++ * cpufreq_notify_utilization - notify CPU userspace about CPU utilization
++ * change
++ *
++ * This function is called everytime the CPU load is evaluated by the
++ * ondemand governor. It notifies userspace of cpu load changes via sysfs.
++ */
++void cpufreq_notify_utilization(struct cpufreq_policy *policy,
++		unsigned int util)
++{
++	if (policy)
++		policy->util = util;
+ 
++	if (policy->util >= MIN_CPU_UTIL_NOTIFY)
++		sysfs_notify(&policy->kobj, NULL, "cpu_utilization");
+ 
++}
+ 
+ /*********************************************************************
+  *                          SYSFS INTERFACE                          *
+@@ -388,6 +403,7 @@ static int cpufreq_parse_governor(char *str_governor, unsigned int *policy,
+ show_one(scaling_min_freq, min);
+ show_one(scaling_max_freq, max);
+ show_one(scaling_cur_freq, cur);
++show_one(cpu_utilization, util);
+ 
+ static int __cpufreq_set_policy(struct cpufreq_policy *data,
+ 				struct cpufreq_policy *policy);
+@@ -614,6 +630,7 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
+ cpufreq_freq_attr_ro(bios_limit);
+ cpufreq_freq_attr_ro(related_cpus);
+ cpufreq_freq_attr_ro(affected_cpus);
++cpufreq_freq_attr_ro(cpu_utilization);
+ cpufreq_freq_attr_rw(scaling_min_freq);
+ cpufreq_freq_attr_rw(scaling_max_freq);
+ cpufreq_freq_attr_rw(scaling_governor);
+@@ -626,6 +643,7 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
+ 	&scaling_min_freq.attr,
+ 	&scaling_max_freq.attr,
+ 	&affected_cpus.attr,
++	&cpu_utilization.attr,
+ 	&related_cpus.attr,
+ 	&scaling_governor.attr,
+ 	&scaling_driver.attr,
+diff --git a/drivers/cpufreq/cpufreq_ondemand.c b/drivers/cpufreq/cpufreq_ondemand.c
+index 620cfd5..a5b1ad4 100644
+--- a/drivers/cpufreq/cpufreq_ondemand.c
++++ b/drivers/cpufreq/cpufreq_ondemand.c
+@@ -625,7 +625,11 @@ static void dbs_freq_increase(struct cpufreq_policy *p, unsigned int freq)
+ 
+ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
+ {
++	/* Extrapolated load of this CPU */
++	unsigned int load_at_max_freq = 0;
+ 	unsigned int max_load_freq;
++	/* Current load across this CPU */
++	unsigned int cur_load = 0;
+ 
+ 	struct cpufreq_policy *policy;
+ 	unsigned int j;
+@@ -670,7 +674,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
+ 		struct cpu_dbs_info_s *j_dbs_info;
+ 		cputime64_t cur_wall_time, cur_idle_time, cur_iowait_time;
+ 		unsigned int idle_time, wall_time, iowait_time;
+-		unsigned int load, load_freq;
++		unsigned int load_freq;
+ 		int freq_avg;
+ 
+ 		j_dbs_info = &per_cpu(od_cpu_dbs_info, j);
+@@ -720,16 +724,20 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
+ 		if (unlikely(!wall_time || wall_time < idle_time))
+ 			continue;
+ 
+-		load = 100 * (wall_time - idle_time) / wall_time;
++		cur_load = 100 * (wall_time - idle_time) / wall_time;
+ 
+ 		freq_avg = __cpufreq_driver_getavg(policy, j);
+ 		if (freq_avg <= 0)
+ 			freq_avg = policy->cur;
+ 
+-		load_freq = load * freq_avg;
++		load_freq = cur_load * freq_avg;
+ 		if (load_freq > max_load_freq)
+ 			max_load_freq = load_freq;
+ 	}
++	/* calculate the scaled load across CPU */
++	load_at_max_freq = (cur_load * policy->cur)/policy->cpuinfo.max_freq;
++
++	cpufreq_notify_utilization(policy, load_at_max_freq);
+ 
+ 	/* Check for frequency increase */
+ 	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+diff --git a/include/linux/cpufreq.h b/include/linux/cpufreq.h
+index 56921db..a28c12c 100644
+--- a/include/linux/cpufreq.h
++++ b/include/linux/cpufreq.h
+@@ -56,6 +56,10 @@ static inline int cpufreq_unregister_notifier(struct notifier_block *nb,
+ #define CPUFREQ_POLICY_POWERSAVE	(1)
+ #define CPUFREQ_POLICY_PERFORMANCE	(2)
+ 
++/* Minimum frequency cutoff to notify the userspace about cpu utilization
++ * changes */
++#define MIN_CPU_UTIL_NOTIFY   40
++
+ /* Frequency values here are CPU kHz so that hardware which doesn't run
+  * with some frequencies can complain without having to guess what per
+  * cent / per mille means.
+@@ -96,6 +100,7 @@ struct cpufreq_policy {
+ 	unsigned int		max;    /* in kHz */
+ 	unsigned int		cur;    /* in kHz, only needed if cpufreq
+ 					 * governors are used */
++	unsigned int            util;  /* CPU utilization at max frequency */
+ 	unsigned int		policy; /* see above */
+ 	struct cpufreq_governor	*governor; /* see below */
+ 
+@@ -255,7 +260,8 @@ struct cpufreq_driver {
+ 
+ 
+ void cpufreq_notify_transition(struct cpufreq_freqs *freqs, unsigned int state);
+-
++void cpufreq_notify_utilization(struct cpufreq_policy *policy,
++		unsigned int load);
+ 
+ static inline void cpufreq_verify_within_limits(struct cpufreq_policy *policy, unsigned int min, unsigned int max)
+ {
