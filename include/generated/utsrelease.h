@@ -1,1 +1,1 @@
-#define UTS_RELEASE "3.0.65-ck1-NeWsEnSe-gbc9a312-dirty"
+#define UTS_RELEASE "3.0.69-ck1NuSeNsE-g9f73d5b-dirty"
