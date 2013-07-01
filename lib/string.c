@@ -23,7 +23,6 @@
 #include <linux/string.h>
 #include <linux/ctype.h>
 #include <linux/export.h>
-#include <linux/memcopy.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/bug.h>
@@ -601,28 +600,42 @@ EXPORT_SYMBOL(memset);
  */
 void *memcpy(void *dest, const void *src, size_t count)
 {
-	unsigned long dstp = (unsigned long)dest; 
-	unsigned long srcp = (unsigned long)src;
+	char *tmp = dest;
+	const char *s = src;
 
-	/* Copy from the beginning to the end */ 
-	mem_copy_fwd(dstp, srcp, count);
+	while (count--)
+		*tmp++ = *s++;
 	return dest;
 }
 EXPORT_SYMBOL(memcpy);
 #endif
 
 #ifndef __HAVE_ARCH_MEMMOVE
+/**
+ * memmove - Copy one area of memory to another
+ * @dest: Where to copy to
+ * @src: Where to copy from
+ * @count: The size of the area.
+ *
+ * Unlike memcpy(), memmove() copes with overlapping areas.
+ */
 void *memmove(void *dest, const void *src, size_t count)
 {
-	unsigned long dstp = (unsigned long)dest; 
-	unsigned long srcp = (unsigned long)src; 
+	char *tmp;
+	const char *s;
 
-	if (dest - src >= count) { 
-		/* Copy from the beginning to the end */ 
-		mem_copy_fwd(dstp, srcp, count); 
+	if (dest <= src) {
+		tmp = dest;
+		s = src;
+		while (count--)
+			*tmp++ = *s++;
 	} else {
-		/* Copy from the end to the beginning */ 
-		mem_copy_bwd(dstp, srcp, count); 
+		tmp = dest;
+		tmp += count;
+		s = src;
+		s += count;
+		while (count--)
+			*--tmp = *--s; 
 	}
 	return dest;
 }
