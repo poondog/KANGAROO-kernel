@@ -34,6 +34,7 @@ modules.builtin
 *.gcno
 *.rej
 *.xzkern
+*.diff
 
 #
 # Top-level generic files
