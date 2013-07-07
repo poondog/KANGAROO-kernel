@@ -22,8 +22,8 @@
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/ctype.h>
-#include <linux/export.h>
 #include <linux/memcopy.h>
+#include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/bug.h>
@@ -589,7 +589,7 @@ void *memset(void *s, int c, size_t count)
 EXPORT_SYMBOL(memset);
 #endif
 
-#ifndef __HAVE_ARCH_MEMCPY
+//#ifndef __HAVE_ARCH_MEMCPY
 /**
  * memcpy - Copy one area of memory to another
  * @dest: Where to copy to
@@ -602,22 +602,30 @@ EXPORT_SYMBOL(memset);
 void *memcpy(void *dest, const void *src, size_t count)
 {
 	unsigned long dstp = (unsigned long)dest; 
-	unsigned long srcp = (unsigned long)src;
+	unsigned long srcp = (unsigned long)src; 
 
 	/* Copy from the beginning to the end */ 
-	mem_copy_fwd(dstp, srcp, count);
+	mem_copy_fwd(dstp, srcp, count); 
 	return dest;
 }
 EXPORT_SYMBOL(memcpy);
-#endif
+//#endif
 
-#ifndef __HAVE_ARCH_MEMMOVE
+//#ifndef __HAVE_ARCH_MEMMOVE
+/**
+ * memmove - Copy one area of memory to another
+ * @dest: Where to copy to
+ * @src: Where to copy from
+ * @count: The size of the area.
+ *
+ * Unlike memcpy(), memmove() copes with overlapping areas.
+ */
 void *memmove(void *dest, const void *src, size_t count)
 {
 	unsigned long dstp = (unsigned long)dest; 
 	unsigned long srcp = (unsigned long)src; 
 
-	if (dest - src >= count) { 
+	if (dest - src >= count) {
 		/* Copy from the beginning to the end */ 
 		mem_copy_fwd(dstp, srcp, count); 
 	} else {
@@ -627,7 +635,7 @@ void *memmove(void *dest, const void *src, size_t count)
 	return dest;
 }
 EXPORT_SYMBOL(memmove);
-#endif
+//#endif
 
 #ifndef __HAVE_ARCH_MEMCMP
 /**
