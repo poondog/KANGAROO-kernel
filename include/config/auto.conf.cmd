@@ -290,16 +290,12 @@ deps_config := \
 	drivers/video/msm_8x60/sii9234/Kconfig \
 	drivers/video/msm_8x60/Kconfig \
 	drivers/video/geode/Kconfig \
-	drivers/gpu/msm/Kconfig \
-	drivers/gpu/msm_adreno220/Kconfig \
-	drivers/gpu/msm_adreno205/Kconfig \
-	drivers/gpu/msm_adreno200/Kconfig \
-	drivers/gpu/Kconfig \
 	drivers/gpu/ion/Kconfig \
 	drivers/gpu/stub/Kconfig \
 	drivers/gpu/drm/radeon/Kconfig \
 	drivers/gpu/drm/Kconfig \
 	drivers/video/msm/vidc/Kconfig \
+	drivers/gpu/msm/Kconfig \
 	drivers/gpu/vga/Kconfig \
 	drivers/char/agp/Kconfig \
 	drivers/video/Kconfig \
@@ -695,7 +691,7 @@ deps_config := \
 include/config/auto.conf: \
 	$(deps_config)
 
-ifneq "$(KERNELVERSION)" "3.0.69-ck1"
+ifneq "$(KERNELVERSION)" "3.0.83-ck1"
 include/config/auto.conf: FORCE
 endif
 ifneq "$(ARCH)" "arm"

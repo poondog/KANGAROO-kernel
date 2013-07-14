@@ -1,7 +1,7 @@
-/* This file is auto generated, version 10 */
+/* This file is auto generated, version 16 */
 /*  PREEMPT */
 #define UTS_MACHINE "arm"
-#define UTS_VERSION "#10 PREEMPT Sun Jun 23 15:49:49 EDT 2013"
+#define UTS_VERSION "#16 PREEMPT Sun Jul 7 19:51:51 EDT 2013"
 #define LINUX_COMPILE_BY "bsmitty2"
 #define LINUX_COMPILE_HOST "bsmitty2-HP-Compaq-6710b-RM342UT-ABA"
 #define LINUX_COMPILE_DOMAIN
