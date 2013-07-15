@@ -199,11 +199,7 @@ SUBARCH := arm
 SUBARCH := arm
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= $(SUBARCH)
-<<<<<<< HEAD
-CROSS_COMPILE	?= /home/joshua/repos/android-toolchain-eabi-4.7-2013.06/bin/arm-eabi-
-=======
 CROSS_COMPILE	?= /home/joshua/repos/android-toolchain-eabi-4.8-2013.06/bin/arm-eabi-
->>>>>>> dc51826916884cb89876bcdf54a2435edb62f410
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h

@@ -1,6 +1,6 @@
 /*
  * Automatically generated C config: don't edit
- * Linux/arm 3.0.83-ck1 Kernel Configuration
+ * Linux/arm 3.0.86-ck1 Kernel Configuration
  */
 #define CONFIG_IP6_NF_MATCH_AH 1
 #define CONFIG_NF_CONNTRACK_H323 1
@@ -573,7 +573,7 @@
 #define CONFIG_DEBUG_KERNEL 1
 #define CONFIG_COMPAT_BRK 1
 #define CONFIG_MSM_SMD0_WQ 1
-#define CONFIG_LOCALVERSION "-HaVeSeNsE"
+#define CONFIG_LOCALVERSION "-KaNgAroO"
 #define CONFIG_MACH_NO_WESTBRIDGE 1
 #define CONFIG_CRYPTO 1
 #define CONFIG_LEDS_GPIO_PLATFORM 1
