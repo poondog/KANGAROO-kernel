@@ -22,6 +22,7 @@
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/string.h>
+#include <asm/div64.h>
 
 #include <mach/msm_iomap.h>
 #include <mach/clk.h>
@@ -1276,7 +1277,7 @@ static struct rcg_clk grp_2d_clk = {
 	.c = {
 		.dbg_name = "grp_2d_clk",
 		.ops = &clk_ops_rcg_7x30,
-		VDD_DIG_FMAX_MAP2(NOMINAL, 245760000, HIGH, 299520000),
+		VDD_DIG_FMAX_MAP2(NOMINAL, 192000000, HIGH, 245760000),
 		CLK_INIT(grp_2d_clk.c),
 		.depends = &axi_grp_2d_clk.c,
 	},
@@ -1296,7 +1297,7 @@ static struct rcg_clk grp_3d_src_clk = {
 	.c = {
 		.dbg_name = "grp_3d_src_clk",
 		.ops = &clk_ops_rcg_7x30,
-		VDD_DIG_FMAX_MAP2(NOMINAL, 192000000, HIGH, 353280000),
+		VDD_DIG_FMAX_MAP2(NOMINAL, 192000000, HIGH, 245760000),
 		CLK_INIT(grp_3d_src_clk.c),
 		.depends = &axi_li_grp_clk.c,
 	},
@@ -2338,7 +2339,7 @@ static DEFINE_CLK_PCOM(p_mi2s_codec_tx_s_clk, MI2S_CODEC_TX_S_CLK,
 		CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_sdac_clk, SDAC_CLK, 0);
 static DEFINE_CLK_PCOM(p_sdac_m_clk, SDAC_M_CLK, 0);
-static DEFINE_CLK_PCOM(p_vfe_clk, VFE_CLK, 0);
+static DEFINE_CLK_PCOM(p_vfe_clk, VFE_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_vfe_camif_clk, VFE_CAMIF_CLK, 0);
 static DEFINE_CLK_PCOM(p_vfe_mdc_clk, VFE_MDC_CLK, 0);
 static DEFINE_CLK_PCOM(p_vfe_p_clk, VFE_P_CLK, 0);
@@ -2386,16 +2387,16 @@ static DEFINE_CLK_PCOM(p_uart2dm_clk, UART2DM_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_usb_hs_clk, USB_HS_CLK, 0);
 static DEFINE_CLK_PCOM(p_usb_hs_core_clk, USB_HS_CORE_CLK, 0);
 static DEFINE_CLK_PCOM(p_usb_hs_p_clk, USB_HS_P_CLK, 0);
-static DEFINE_CLK_PCOM(p_cam_m_clk, CAM_M_CLK, 0);
+static DEFINE_CLK_PCOM(p_cam_m_clk, CAM_M_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_camif_pad_p_clk, CAMIF_PAD_P_CLK, 0);
 static DEFINE_CLK_PCOM(p_csi0_clk, CSI0_CLK, CLKFLAG_SKIP_AUTO_OFF);
-static DEFINE_CLK_PCOM(p_csi0_vfe_clk, CSI0_VFE_CLK, 0);
+static DEFINE_CLK_PCOM(p_csi0_vfe_clk, CSI0_VFE_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_csi0_p_clk, CSI0_P_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_mdp_clk, MDP_CLK, 0);
 static DEFINE_CLK_PCOM(p_mfc_clk, MFC_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_mfc_div2_clk, MFC_DIV2_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_mfc_p_clk, MFC_P_CLK, CLKFLAG_SKIP_AUTO_OFF);
-static DEFINE_CLK_PCOM(p_vpe_clk, VPE_CLK, 0);
+static DEFINE_CLK_PCOM(p_vpe_clk, VPE_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_adm_clk, ADM_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_ce_clk, CE_CLK, CLKFLAG_SKIP_AUTO_OFF);
 static DEFINE_CLK_PCOM(p_axi_rotator_clk, AXI_ROTATOR_CLK,
@@ -2854,7 +2855,6 @@ static struct clk_local_ownership {
 	OWN(ROW2,  9, "core_clk",	uart1_clk,	"msm_serial.0"),
 	OWN(ROW2,  6, "core_clk",	uart1dm_clk,	"msm_serial_hs.0"),
 	OWN(ROW2,  6, "core_clk",	uart1dm_clk,	"msm_serial_hs_brcm.0"),/* for brcm BT */
-	OWN(ROW2,  6, "core_clk",	uart1dm_clk,	"msm_serial_hs_ti_dc.0"),/* for ti BT */
 	OWN(ROW2,  8, "core_clk",	uart2dm_clk,	"msm_serial_hs.1"),
 	OWN(ROW2, 11, "alt_core_clk",	usb_hs_clk,	"msm_otg"),
 	OWN(ROW2, 11, "core_clk",	usb_hs_core_clk, "msm_otg"),
@@ -2992,8 +2992,8 @@ static void __init msm7x30_clock_init(void)
 	clk_set_rate(&mdc_clk.c, 1);
 	/* Sync the LPA_CODEC clock to MI2S_CODEC_RX */
 	clk_set_rate(&lpa_codec_clk.c, 1);
-	/* Sync the GRP2D clock to AXI */
-	clk_set_rate(&grp_2d_clk.c, 1);
+	/* Set rate of 2D-core GPU Clock @245Mhz (OC of 53Mhz 25% perf boost by Shaky156) */
+	clk_set_rate(&grp_2d_clk.c, 245760000);
 }
 
 struct clock_init_data msm7x30_clock_init_data __initdata = {
