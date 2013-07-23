@@ -393,7 +393,7 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
  -Wno-error=enum-compare -Wno-error=parentheses -Wno-error=array-bounds -Wno-array-bounds -Wno-unused-variable
 
  KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -march=armv7-a -mfpu=neon \
+		   -march=armv7-a -mfpu=neon -funswitch-loops -pipe \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
@@ -401,8 +401,7 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 		   -Wno-maybe-uninitialized \
         	   -Wno-sizeof-pointer-memaccess \
         	   -fno-aggressive-loop-optimizations \
-		   -ftree-vectorize \
-		   -O2
+		   -ftree-vectorize
 
  KBUILD_AFLAGS_KERNEL :=
  KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funswitch-loops
