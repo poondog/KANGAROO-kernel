@@ -620,4 +620,6 @@ obj-y += display/
 obj-$(CONFIG_MACH_PRIMOTD) += board-primotd-gps.o
 obj-$(CONFIG_HTC_ACCESSORY_ONEWIRE) += htc_onewire.o
 
-# obj-$(CONFIG_MSM_SLEEPER) += msm-sleeper.o
+ifdef CONFIG_MSM_SLEEPER
+        obj-$(CONFIG_MSM_SLEEPER) += msm-sleeper.o
+endif
