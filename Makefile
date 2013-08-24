@@ -199,7 +199,7 @@ SUBARCH := arm
 SUBARCH := arm
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= $(SUBARCH)
-CROSS_COMPILE	?= /home/joshua/repos/android-toolchain-eabi-4.8-2013.06/bin/arm-eabi-
+CROSS_COMPILE	?= /home/joshua/repos/android-toolchain-eabi-4.7-2013.06/bin/arm-eabi-
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h
@@ -262,7 +262,7 @@ HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-fram
 HOSTCXXFLAGS = -Ofast -fno-tree-vectorize 
 else
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+HOSTCXXFLAGS = -O2 -fno-tree-vectorize 
 endif
 endif
 # Decide whether to build built-in, modular, or both.
@@ -364,17 +364,18 @@ CHECK		= sparse
 
 # Use the wrapper for the compiler.  This wrapper scans for new
 # warnings and causes the build to stop upon encountering them.
-CC		= $(REAL_CC) 
+CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-MODFLAGS 	= -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funswitch-loops	
+MODFLAGS 	= -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops	
 CFLAGS_MODULE 	= $(MODFLAGS)	
 AFLAGS_MODULE 	= $(MODFLAGS)
 LDFLAGS_MODULE 	= -T $(srctree)/scripts/module-common.lds
-CFLAGS_KERNEL 	= -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funswitch-loops	
+CFLAGS_KERNEL 	= -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops	
 AFLAGS_KERNEL 	= -fgcse -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize	
 CFLAGS_GCOV 	= -fprofile-arcs -ftest-coverage
+
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
@@ -385,24 +386,24 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
  KBUILD_CPPFLAGS := -D__KERNEL__ -Wno-unused-but-set-variable \
  -Wno-error=unused-value -Wno-error=switch -Wno-error=uninitialized -Wno-error=address \
- -Wno-error=enum-compare -Wno-error=parentheses -Wno-error=array-bounds -Wno-array-bounds -Wno-unused-variable
+ -Wno-error=enum-compare -Wno-error=parentheses -Wno-error=array-bounds -Wno-unused-variable
 
- KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -march=armv7-a -mfpu=neon -funswitch-loops -pipe \
-		   -fno-strict-aliasing -fno-common \
-		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-       		   -fno-delete-null-pointer-checks \
-		   -Wno-maybe-uninitialized \
-        	   -Wno-sizeof-pointer-memaccess \
-        	   -fno-aggressive-loop-optimizations \
-		   -ftree-vectorize
+ KBUILD_CFLAGS   := -Wundef -Wstrict-prototypes -Wno-trigraphs \
+            -fno-strict-aliasing -fno-common \
+            -Werror-implicit-function-declaration \
+            -Wno-format-security \
+            -fno-delete-null-pointer-checks -mno-unaligned-access \
+            -mtune=cortex-a8 -mfpu=neon-vfpv4 \
+            -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
+            -fipa-cp-clone -fsingle-precision-constant -pipe \
+            -funswitch-loops -floop-interchange -floop-strip-mine -floop-block -O3 \
+            -funsafe-math-optimizations -ftree-vectorize -ftree-partial-pre
 
  KBUILD_AFLAGS_KERNEL :=
- KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funswitch-loops
+ KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
  KBUILD_AFLAGS   := -D__ASSEMBLY__
  KBUILD_AFLAGS_MODULE  := -DMODULE
- KBUILD_CFLAGS_MODULE  := -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funswitch-loops
+ KBUILD_CFLAGS_MODULE  := -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
  KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
