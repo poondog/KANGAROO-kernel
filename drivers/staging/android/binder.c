@@ -398,11 +398,11 @@ repeat:
 		goto repeat;
 	}
 
-	FD_SET(fd, fdt->open_fds);
+	__set_open_fd(fd, fdt);
 	if (flags & O_CLOEXEC)
-		FD_SET(fd, fdt->close_on_exec);
+		__set_close_on_exec(fd, fdt);
 	else
-		FD_CLR(fd, fdt->close_on_exec);
+		__clear_close_on_exec(fd, fdt);
 	files->next_fd = fd + 1;
 #if 1
 	
@@ -415,6 +415,9 @@ repeat:
 
 out:
 	spin_unlock(&files->file_lock);
+#if FD_DEBUG
+	fd_num_check(files, fd);
+#endif
 	return error;
 }
 
