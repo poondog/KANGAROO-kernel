@@ -385,7 +385,7 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
                    -include include/generated/autoconf.h
 
  KBUILD_CPPFLAGS := -D__KERNEL__ -Wno-unused-but-set-variable \
- -Wno-error=unused-value -Wno-error=switch -Wno-error=uninitialized -Wno-error=address \
+ -Wno-error=unused-value -Wno-error=switch -Wno-error=address \
  -Wno-error=enum-compare -Wno-error=parentheses -Wno-error=array-bounds -Wno-unused-variable
 
  KBUILD_CFLAGS   := -Wundef -Wstrict-prototypes -Wno-trigraphs \
