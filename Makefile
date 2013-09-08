@@ -254,8 +254,8 @@ HOSTCC       = gcc
 HOSTCXX      = g++
 
 ifdef CONFIG_CC_OPTIMIZE_ALOT
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer
-HOSTCXXFLAGS = -O3 -fno-tree-vectorize 
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -ftree-vectorize -fomit-frame-pointer
+HOSTCXXFLAGS = -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -march=armv7-a -mtune=cortex-a8 -marm -mfpu=neon-vfpv4 -ftree-vectorize
 else
 ifdef CONFIG_CC_OPTIMIZE_FAST
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer
@@ -384,9 +384,7 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
                    $(if $(KBUILD_SRC), -I$(srctree)/include) \
                    -include include/generated/autoconf.h
 
- KBUILD_CPPFLAGS := -D__KERNEL__ -Wno-unused-but-set-variable \
- -Wno-error=unused-value -Wno-error=switch -Wno-error=address \
- -Wno-error=enum-compare -Wno-error=parentheses -Wno-error=array-bounds -Wno-unused-variable
+ KBUILD_CPPFLAGS := -D__KERNEL__ -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a15 -marm -march=armv7-a -mfpu=neon-vfpv4 -ftree-vectorize
 
  KBUILD_CFLAGS   := -Wundef -Wstrict-prototypes -Wno-trigraphs \
             -fno-strict-aliasing -fno-common \
@@ -405,6 +403,9 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
  KBUILD_AFLAGS_MODULE  := -DMODULE
  KBUILD_CFLAGS_MODULE  := -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
  KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
+
+KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
+KBUILD_CFLAGS += $(call cc-disable-warning, array-bounds)
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
