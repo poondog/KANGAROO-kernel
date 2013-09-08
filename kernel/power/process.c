@@ -22,7 +22,7 @@
 /* 
  * Timeout for stopping processes
  */
-#define TIMEOUT	(20 * HZ)
+unsigned int __read_mostly freeze_timeout_msecs = 2 * MSEC_PER_SEC;
 
 static inline int freezable(struct task_struct * p)
 {
@@ -47,7 +47,7 @@ static int try_to_freeze_tasks(bool sig_only)
 
 	do_gettimeofday(&start);
 
-	end_time = jiffies + TIMEOUT;
+	end_time = jiffies + msecs_to_jiffies(freeze_timeout_msecs);
 
 	if (!sig_only)
 		freeze_workqueues_begin();
