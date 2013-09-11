@@ -388,9 +388,6 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
  KBUILD_CFLAGS   := -Wundef -Wstrict-prototypes -Wno-trigraphs \
             -fno-strict-aliasing -fno-common \
-            -Werror-implicit-function-declaration \
-            -Wno-format-security \
-            -fno-delete-null-pointer-checks -mno-unaligned-access \
             -mtune=cortex-a8 -mfpu=neon-vfpv4 \
             -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
             -fipa-cp-clone -fsingle-precision-constant -pipe \
