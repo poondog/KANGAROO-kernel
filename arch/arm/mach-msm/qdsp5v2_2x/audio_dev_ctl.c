@@ -69,17 +69,9 @@ struct audio_routing_info {
 	int tx_mute;
 	int rx_mute;
 	int call_state;
-	int voice_state;
 };
 
 static struct audio_routing_info routing_info;
-
-int msm_get_voice_state(void)
-{
-        MM_DBG("voice state %d\n", routing_info.voice_state);
-        return routing_info.voice_state;
-}
-EXPORT_SYMBOL(msm_get_voice_state);
 
 int msm_get_call_state(void)
 {
@@ -90,10 +82,7 @@ EXPORT_SYMBOL(msm_get_call_state);
 
 int msm_set_voice_mute(int dir, int mute)
 {
-	MM_AUD_INFO("dir %x mute %x\n", dir, mute);
-        if (!audio_dev_ctrl.voice_rx_dev
-                || !audio_dev_ctrl.voice_tx_dev)
-                return -EPERM;
+	pr_aud_info("dir %x mute %x\n", dir, mute);
 	if (dir == DIR_TX) {
 		routing_info.tx_mute = mute;
 		broadcast_event(AUDDEV_EVT_DEVICE_VOL_MUTE_CHG,
@@ -109,9 +98,6 @@ EXPORT_SYMBOL(msm_set_voice_mute);
 
 int msm_set_voice_vol(int dir, s32 volume)
 {
-        if (!audio_dev_ctrl.voice_rx_dev
-                || !audio_dev_ctrl.voice_tx_dev)
-                return -EPERM;
 	if (dir == DIR_TX) {
 		routing_info.voice_tx_vol = volume;
 		broadcast_event(AUDDEV_EVT_DEVICE_VOL_MUTE_CHG,
@@ -137,7 +123,7 @@ void msm_snddev_register(struct msm_snddev_info *dev_info)
 		dev_info->sessions = 0x0;
 		audio_dev_ctrl.num_dev++;
 	} else
-		MM_AUD_ERR("%s: device registry max out\n", __func__);
+		pr_aud_err("%s: device registry max out\n", __func__);
 	mutex_unlock(&session_lock);
 }
 EXPORT_SYMBOL(msm_snddev_register);
@@ -216,7 +202,7 @@ int msm_set_voc_route(struct msm_snddev_info *dev_info,
 	u32 session_mask = 0;
 
 	if (dev_info == NULL) {
-		MM_AUD_ERR("%s: invalid device info\n", __func__);
+		pr_aud_err("%s: invalid device info\n", __func__);
 		return -EINVAL;
 	}
 	mutex_lock(&session_lock);
@@ -392,7 +378,7 @@ int auddev_register_evt_listner(u32 evt_id, u32 clnt_type, u32 clnt_id,
 
 	new_cb = kzalloc(sizeof(struct msm_snd_evt_listner), GFP_KERNEL);
 	if (!new_cb) {
-		MM_AUD_ERR("No memory to add new listener node\n");
+		pr_aud_err("No memory to add new listener node\n");
 		return -ENOMEM;
 	}
 
@@ -558,7 +544,11 @@ int msm_snddev_request_freq(int *freq, u32 session_id,
 				continue;
 			}
 			set_freq = MAX(*freq, info->set_sample_rate);
-
+			if (set_freq == info->set_sample_rate) {
+				rc = info->set_sample_rate;
+				*freq = info->set_sample_rate;
+				continue;
+			}
 
 			if (clnt_type == AUDDEV_CLNT_DEC) {
 				routing_info.dec_freq[session_id].evt = 1;
@@ -602,7 +592,7 @@ int msm_snddev_enable_sidetone(u32 dev_id, u32 enable)
 	dev_info = audio_dev_ctrl_find_dev(dev_id);
 
 	if (IS_ERR(dev_info)) {
-		MM_AUD_ERR("bad dev_id %d\n", dev_id);
+		pr_aud_err("bad dev_id %d\n", dev_id);
 		rc = -EINVAL;
 	} else if (!dev_info->dev_ops.enable_sidetone) {
 		MM_DBG("dev %d no sidetone support\n", dev_id);
@@ -680,7 +670,7 @@ static long audio_dev_ctrl_ioctl(struct file *file, unsigned int cmd,
 		route_cfg.dev_id, route_cfg.stream_type);
 		dev_info = audio_dev_ctrl_find_dev(route_cfg.dev_id);
 		if (IS_ERR(dev_info)) {
-			MM_AUD_ERR("%s: pass invalid dev_id\n", __func__);
+			pr_aud_err("%s: pass invalid dev_id\n", __func__);
 			rc = PTR_ERR(dev_info);
 			break;
 		}
@@ -762,8 +752,7 @@ void broadcast_event(u32 evt_id, u32 dev_id, u32 session_id)
 
 	if ((evt_id != AUDDEV_EVT_START_VOICE)
 		&& (evt_id != AUDDEV_EVT_END_VOICE)
-		&& (evt_id != AUDDEV_EVT_STREAM_VOL_CHG)
-		&& (evt_id != AUDDEV_EVT_VOICE_STATE_CHG)) {
+		&& (evt_id != AUDDEV_EVT_STREAM_VOL_CHG)) {
 		dev_info = audio_dev_ctrl_find_dev(dev_id);
 		if (IS_ERR(dev_info))
 			return;
@@ -775,14 +764,11 @@ void broadcast_event(u32 evt_id, u32 dev_id, u32 session_id)
 		return;
 	mutex_lock(&session_lock);
 
-        if (evt_id == AUDDEV_EVT_VOICE_STATE_CHG)
-                routing_info.voice_state = dev_id;
-
 	evt_payload = kzalloc(sizeof(union auddev_evt_data),
 			GFP_KERNEL);
 
 	if (!evt_payload) {
-		MM_AUD_ERR("%s: fail to allocate memory\n", __func__);
+		pr_aud_err("%s: fail to allocate memory\n", __func__);
 		return;
 	}
 
@@ -812,10 +798,8 @@ void broadcast_event(u32 evt_id, u32 dev_id, u32 session_id)
 		session_mask = (0x1 << (clnt_id))
 				<< (8 * ((int)callback->clnt_type-1));
 
-        if ((evt_id == AUDDEV_EVT_STREAM_VOL_CHG) || 
-                        (evt_id == AUDDEV_EVT_VOICE_STATE_CHG)) {
-			MM_DBG("AUDDEV_EVT_STREAM_VOL_CHG or\
-                                AUDDEV_EVT_VOICE_STATE_CHG\n");
+		if (evt_id == AUDDEV_EVT_STREAM_VOL_CHG) {
+			MM_DBG("AUDDEV_EVT_STREAM_VOL_CHG\n");
 			goto volume_strm;
 		}
 
@@ -867,18 +851,14 @@ volume_strm:
 					evt_payload->freq_info.acdb_dev_id
 						= dev_info->acdb_id;
 				}
-			} else if (evt_id == AUDDEV_EVT_VOICE_STATE_CHG) {
-            		evt_payload->voice_state =
-                                        routing_info.call_state;
-            } else
+			} else
 				evt_payload->routing_id = dev_info->copp_id;
 			callback->auddev_evt_listener(
 					evt_id,
 					evt_payload,
 					callback->private_data);
 sent_dec:
-            if ((evt_id != AUDDEV_EVT_STREAM_VOL_CHG) &&
-                                (evt_id != AUDDEV_EVT_VOICE_STATE_CHG))
+			if (evt_id != AUDDEV_EVT_STREAM_VOL_CHG)
 				routing_info.dec_freq[clnt_id].freq
 						= dev_info->set_sample_rate;
 
@@ -904,9 +884,6 @@ sent_dec:
 					evt_payload->freq_info.acdb_dev_id
 						= dev_info->acdb_id;
 				}
-			} else if (evt_id == AUDDEV_EVT_VOICE_STATE_CHG) {
-                                evt_payload->voice_state =
-                                        routing_info.call_state;
 			} else {
 				if (dev_info)
 					evt_payload->routing_id = dev_info->copp_id;
@@ -927,48 +904,24 @@ sent_enc:
 		}
 aud_cal:
 		if (callback->clnt_type == AUDDEV_CLNT_AUDIOCAL) {
-                        int temp_sessions;
 			MM_DBG("AUDDEV_CLNT_AUDIOCAL\n");
 			if (dev_info == NULL) {
 				MM_DBG("dev_info is NULL\n");
 				break;
 			}
-			if (evt_id == AUDDEV_EVT_VOICE_STATE_CHG)
-                                evt_payload->voice_state =
-                                        routing_info.call_state;
-                        else if (!dev_info->sessions)
+			if (!dev_info->sessions)
 				goto sent_aud_cal;
-			else {
-                                evt_payload->audcal_info.dev_id =
-                                                dev_info->copp_id;
-                                evt_payload->audcal_info.acdb_id =
-                                                dev_info->acdb_id;
-                                evt_payload->audcal_info.dev_type =
-                                        (dev_info->capability & SNDDEV_CAP_TX) ?
-                                        SNDDEV_CAP_TX : SNDDEV_CAP_RX;
-                                evt_payload->audcal_info.sample_rate =
-                                        dev_info->set_sample_rate ?
-                                        dev_info->set_sample_rate :
-                                        dev_info->sample_rate;
-                        }
-                        if (evt_payload->audcal_info.dev_type ==
-                                                SNDDEV_CAP_TX) {
-                                if (session_id == SESSION_IGNORE)
-                                        temp_sessions = dev_info->sessions;
-                                else
-                                        temp_sessions = session_id;
-                                evt_payload->audcal_info.sessions =
-                                        (temp_sessions >>
-                                                ((AUDDEV_CLNT_ENC-1) * 8));
-                        } else {
-                                if (session_id == SESSION_IGNORE)
-                                        temp_sessions = dev_info->sessions;
-                                else
-                                        temp_sessions = session_id;
-                                evt_payload->audcal_info.sessions =
-                                        (temp_sessions >>
-                                                ((AUDDEV_CLNT_DEC-1) * 8));
-                        }
+			evt_payload->audcal_info.dev_id = dev_info->copp_id;
+			evt_payload->audcal_info.acdb_id =
+				dev_info->acdb_id;
+			evt_payload->audcal_info.dev_type =
+				(dev_info->capability & SNDDEV_CAP_TX) ?
+				SNDDEV_CAP_TX : SNDDEV_CAP_RX;
+			evt_payload->audcal_info.sample_rate =
+				dev_info->set_sample_rate ?
+				dev_info->set_sample_rate :
+				dev_info->sample_rate;
+
 			callback->auddev_evt_listener(
 				evt_id,
 				evt_payload,
@@ -1035,10 +988,7 @@ voc_events:
 						= dev_info->acdb_id;
 				} else
 					goto sent_voc;
-			} else if (evt_id == AUDDEV_EVT_VOICE_STATE_CHG)
-                                evt_payload->voice_state =
-                                                routing_info.call_state;
-			else {
+			} else {
 				evt_payload->voc_devinfo.dev_type =
 					(dev_info->capability & SNDDEV_CAP_TX) ?
 					SNDDEV_CAP_TX : SNDDEV_CAP_RX;
@@ -1125,7 +1075,6 @@ static int __init audio_dev_ctrl_init(void)
 	audio_dev_ctrl.num_dev = 0;
 	audio_dev_ctrl.voice_tx_dev = NULL;
 	audio_dev_ctrl.voice_rx_dev = NULL;
-        routing_info.call_state = VOICE_STATE_INVALID;
 	return misc_register(&audio_dev_ctrl_misc);
 }
 

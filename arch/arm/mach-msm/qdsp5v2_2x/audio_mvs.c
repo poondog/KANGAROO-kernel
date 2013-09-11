@@ -26,7 +26,6 @@
 #include <mach/msm_audio_mvs.h>
 #include <linux/slab.h>
 #include <mach/msm_rpcrouter.h>
-#include <mach/debug_mm.h>
 
 #define MVS_WR 0
 #define MVS_PROG 0x30000014
@@ -323,7 +322,7 @@ static int audio_mvs_setup_amr(struct audio_mvs_info_type *audio)
 			rc = 0;
 		}
 	} else {
-		MM_AUD_ERR("%s: RPC write for set amr mode failed %d\n",
+		pr_aud_err("%s: RPC write for set amr mode failed %d\n",
 		       __func__, rc);
 	}
 
@@ -372,7 +371,7 @@ static int audio_mvs_setup_voc(struct audio_mvs_info_type *audio)
 
 		rc = 0;
 	} else {
-		MM_AUD_ERR("%s: RPC write for set voc mode failed %d\n",
+		pr_aud_err("%s: RPC write for set voc mode failed %d\n",
 		       __func__, rc);
 	}
 
@@ -422,16 +421,16 @@ static int audio_mvs_setup(struct audio_mvs_info_type *audio)
 			} else if (audio->mvs_mode == MVS_MODE_IS127) {
 				rc = audio_mvs_setup_voc(audio);
 			} else {
-				MM_AUD_ERR("%s: Unknown MVS mode %d\n",
+				pr_aud_err("%s: Unknown MVS mode %d\n",
 				       __func__, audio->mvs_mode);
 				rc = -EINVAL;
 			}
 		} else {
-			MM_AUD_ERR("%s: Wait event for enable failed %d\n",
+			pr_aud_err("%s: Wait event for enable failed %d\n",
 			       __func__, rc);
 		}
 	} else {
-		MM_AUD_ERR("%s: RPC write for enable failed %d\n", __func__, rc);
+		pr_aud_err("%s: RPC write for enable failed %d\n", __func__, rc);
 	}
 
 	return rc;
@@ -442,7 +441,7 @@ static int audio_mvs_start(struct audio_mvs_info_type *audio)
 	int rc = 0;
 	struct audio_mvs_acquire_msg acquire_msg;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	/* Prevent sleep. */
 	wake_lock(&audio->suspend_lock);
@@ -478,13 +477,13 @@ static int audio_mvs_start(struct audio_mvs_info_type *audio)
 				audio->state = AUDIO_MVS_STARTED;
 
 		} else {
-			MM_AUD_ERR("%s: Wait event for acquire failed %d\n",
+			pr_aud_err("%s: Wait event for acquire failed %d\n",
 			       __func__, rc);
 
 			rc = -EBUSY;
 		}
 	} else {
-		MM_AUD_ERR("%s: RPC write for acquire failed %d\n", __func__, rc);
+		pr_aud_err("%s: RPC write for acquire failed %d\n", __func__, rc);
 
 		rc = -EBUSY;
 	}
@@ -497,7 +496,7 @@ static int audio_mvs_stop(struct audio_mvs_info_type *audio)
 	int rc = 0;
 	struct audio_mvs_release_msg release_msg;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	/* Release MVS. */
 	memset(&release_msg, 0, sizeof(release_msg));
@@ -528,11 +527,11 @@ static int audio_mvs_stop(struct audio_mvs_info_type *audio)
 			wake_up(&audio->out_wait);
 			rc = 0;
 		} else {
-			MM_AUD_ERR("%s: Wait event for release failed %d\n",
+			pr_aud_err("%s: Wait event for release failed %d\n",
 			       __func__, rc);
 		}
 	} else {
-		MM_AUD_ERR("%s: RPC write for release failed %d\n", __func__, rc);
+		pr_aud_err("%s: RPC write for release failed %d\n", __func__, rc);
 	}
 
 	/* Allow sleep. */
@@ -590,11 +589,11 @@ static void audio_mvs_process_rpc_request(uint32_t procedure,
 					wake_up(&audio->mode_wait);
 				}
 			} else {
-				MM_AUD_ERR("%s: MVS CB unknown event type %d\n",
+				pr_aud_err("%s: MVS CB unknown event type %d\n",
 				       __func__, event_type);
 			}
 		} else {
-			MM_AUD_ERR("%s: MVS CB event pointer not valid\n",
+			pr_aud_err("%s: MVS CB event pointer not valid\n",
 			       __func__);
 		}
 
@@ -614,7 +613,7 @@ static void audio_mvs_process_rpc_request(uint32_t procedure,
 				   sizeof(reply_hdr));
 
 		if (rc < 0)
-			MM_AUD_ERR("%s: RPC write for response failed %d\n",
+			pr_aud_err("%s: RPC write for response failed %d\n",
 			       __func__, rc);
 
 		break;
@@ -685,13 +684,13 @@ static void audio_mvs_process_rpc_request(uint32_t procedure,
 				/* PCM and EVRC don't have frame_type */
 				buf_node->frame.frame_type = 0;
 			} else {
-				MM_AUD_ERR("%s: UL Unknown frame mode %d\n",
+				pr_aud_err("%s: UL Unknown frame mode %d\n",
 				       __func__, frame_mode);
 			}
 
 			list_add_tail(&buf_node->list, &audio->out_queue);
 		} else {
-			MM_AUD_ERR("%s: UL data dropped, read is slow\n", __func__);
+			pr_aud_err("%s: UL data dropped, read is slow\n", __func__);
 		}
 
 		mutex_unlock(&audio->out_lock);
@@ -718,7 +717,7 @@ static void audio_mvs_process_rpc_request(uint32_t procedure,
 				   sizeof(ul_reply));
 
 		if (rc < 0)
-			MM_AUD_ERR("%s: RPC write for UL response failed %d\n",
+			pr_aud_err("%s: RPC write for UL response failed %d\n",
 			       __func__, rc);
 
 		break;
@@ -771,7 +770,7 @@ static void audio_mvs_process_rpc_request(uint32_t procedure,
 				dl_reply.param1 = cpu_to_be32(audio->rate_type);
 				dl_reply.param2 = 0;
 			} else {
-				MM_AUD_ERR("%s: DL Unknown frame mode %d\n",
+				pr_aud_err("%s: DL Unknown frame mode %d\n",
 				       __func__, frame_mode);
 			}
 
@@ -804,14 +803,14 @@ static void audio_mvs_process_rpc_request(uint32_t procedure,
 				   sizeof(dl_reply));
 
 		if (rc < 0)
-			MM_AUD_ERR("%s: RPC write for DL response failed %d\n",
+			pr_aud_err("%s: RPC write for DL response failed %d\n",
 			       __func__, rc);
 
 		break;
 	}
 
 	default:
-		MM_AUD_ERR("%s: Unknown CB type %d\n", __func__, procedure);
+		pr_aud_err("%s: Unknown CB type %d\n", __func__, procedure);
 	}
 }
 
@@ -820,7 +819,7 @@ static int audio_mvs_thread(void *data)
 	struct audio_mvs_info_type *audio = data;
 	struct rpc_request_hdr *rpc_hdr = NULL;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	while (!kthread_should_stop()) {
 #if MVS_WR
@@ -835,7 +834,7 @@ static int audio_mvs_thread(void *data)
 					       -1);
 #endif
 		if (rpc_hdr_len < 0) {
-			MM_AUD_ERR("%s: RPC read failed %d\n",
+			pr_aud_err("%s: RPC read failed %d\n",
 			       __func__, rpc_hdr_len);
 
 #if MVS_WR
@@ -844,7 +843,7 @@ static int audio_mvs_thread(void *data)
 			break;
 #endif
 		} else if (rpc_hdr_len < RPC_COMMON_HDR_SZ) {
-			MM_AUD_ERR("%s: RPC read wrong header len: %d\n",
+			pr_aud_err("%s: RPC read wrong header len: %d\n",
 			       __func__, rpc_hdr_len);
 			continue;
 		} else {
@@ -869,7 +868,7 @@ static int audio_mvs_thread(void *data)
 
 					wake_up(&audio->wait);
 
-					MM_AUD_ERR("%s: RPC reply status denied\n",
+					pr_aud_err("%s: RPC reply status denied\n",
 					       __func__);
 				}
 			} else if (rpc_type == RPC_TYPE_REQUEST) {
@@ -883,7 +882,7 @@ static int audio_mvs_thread(void *data)
 					(rpc_hdr_len - sizeof(*rpc_hdr)),
 					audio);
 			} else {
-				MM_AUD_ERR("%s: Unexpected RPC type %d\n",
+				pr_aud_err("%s: Unexpected RPC type %d\n",
 				       __func__, rpc_type);
 			}
 		}
@@ -892,7 +891,7 @@ static int audio_mvs_thread(void *data)
 		rpc_hdr = NULL;
 	}
 
-	MM_AUD_INFO("%s: MVS thread stopped\n", __func__);
+	pr_aud_info("%s: MVS thread stopped\n", __func__);
 
 	return 0;
 }
@@ -915,7 +914,7 @@ static int audio_mvs_alloc_buf(struct audio_mvs_info_type *audio)
 				list_add_tail(&buf_node->list,
 					      &audio->free_in_queue);
 			} else {
-				MM_AUD_ERR("%s: No memory for IO buffers\n",
+				pr_aud_err("%s: No memory for IO buffers\n",
 				       __func__);
 				goto err;
 			}
@@ -931,7 +930,7 @@ static int audio_mvs_alloc_buf(struct audio_mvs_info_type *audio)
 				list_add_tail(&buf_node->list,
 					      &audio->free_out_queue);
 			} else {
-				MM_AUD_ERR("%s: No memory for IO buffers\n",
+				pr_aud_err("%s: No memory for IO buffers\n",
 				       __func__);
 				goto err;
 			}
@@ -1011,7 +1010,7 @@ static int audio_mvs_open(struct inode *inode, struct file *file)
 {
 	int rc = 0;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	mutex_lock(&audio_mvs_info.lock);
 
@@ -1032,7 +1031,7 @@ static int audio_mvs_open(struct inode *inode, struct file *file)
 			rc = -ENODEV;
 		}
 	} else {
-		MM_AUD_ERR("%s: MVS driver exists, state %d\n",
+		pr_aud_err("%s: MVS driver exists, state %d\n",
 		       __func__, audio_mvs_info.state);
 
 		rc = -EBUSY;
@@ -1048,7 +1047,7 @@ static int audio_mvs_release(struct inode *inode, struct file *file)
 
 	struct audio_mvs_info_type *audio = file->private_data;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	mutex_lock(&audio->lock);
 	if (audio->state == AUDIO_MVS_STARTED)
@@ -1097,7 +1096,7 @@ static ssize_t audio_mvs_read(struct file *file,
 					    sizeof(buf_node->frame.frame_type) +
 					    sizeof(buf_node->frame.len);
 				} else {
-					MM_AUD_ERR("%s: Copy to user retuned %d",
+					pr_aud_err("%s: Copy to user retuned %d",
 					       __func__, rc);
 
 					rc = -EFAULT;
@@ -1106,14 +1105,14 @@ static ssize_t audio_mvs_read(struct file *file,
 				list_add_tail(&buf_node->list,
 					      &audio->free_out_queue);
 			} else {
-				MM_AUD_ERR("%s: Read count %d < sizeof(frame) %d",
+				pr_aud_err("%s: Read count %d < sizeof(frame) %d",
 				       __func__, count,
 				       sizeof(struct msm_audio_mvs_frame));
 
 				rc = -ENOMEM;
 			}
 		} else {
-			MM_AUD_ERR("%s: Read performed in state %d\n",
+			pr_aud_err("%s: Read performed in state %d\n",
 			       __func__, audio->state);
 
 			rc = -EPERM;
@@ -1121,11 +1120,11 @@ static ssize_t audio_mvs_read(struct file *file,
 		mutex_unlock(&audio->out_lock);
 
 	} else if (rc == 0) {
-		MM_AUD_ERR("%s: No UL data available\n", __func__);
+		pr_aud_err("%s: No UL data available\n", __func__);
 
 		rc = -ETIMEDOUT;
 	} else {
-		MM_AUD_ERR("%s: Read was interrupted\n", __func__);
+		pr_aud_err("%s: Read was interrupted\n", __func__);
 
 		rc = -ERESTARTSYS;
 	}
@@ -1161,17 +1160,17 @@ static ssize_t audio_mvs_write(struct file *file,
 				list_add_tail(&buf_node->list,
 					      &audio->in_queue);
 			} else {
-				MM_AUD_ERR("%s: No free DL buffs\n", __func__);
+				pr_aud_err("%s: No free DL buffs\n", __func__);
 			}
 		} else {
-			MM_AUD_ERR("%s: Write count %d < sizeof(frame) %d",
+			pr_aud_err("%s: Write count %d < sizeof(frame) %d",
 			       __func__, count,
 			       sizeof(struct msm_audio_mvs_frame));
 
 			rc = -ENOMEM;
 		}
 	} else {
-		MM_AUD_ERR("%s: Write performed in invalid state %d\n",
+		pr_aud_err("%s: Write performed in invalid state %d\n",
 		       __func__, audio->state);
 
 		rc = -EPERM;
@@ -1189,7 +1188,7 @@ static long audio_mvs_ioctl(struct file *file,
 
 	struct audio_mvs_info_type *audio = file->private_data;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	switch (cmd) {
 	case AUDIO_GET_MVS_CONFIG: {
@@ -1206,7 +1205,7 @@ static long audio_mvs_ioctl(struct file *file,
 		if (rc == 0)
 			rc = sizeof(config);
 		else
-			MM_AUD_ERR("%s: Config copy failed %d\n", __func__, rc);
+			pr_aud_err("%s: Config copy failed %d\n", __func__, rc);
 
 		break;
 	}
@@ -1224,7 +1223,7 @@ static long audio_mvs_ioctl(struct file *file,
 				audio->mvs_mode = config.mvs_mode;
 				audio->rate_type = config.rate_type;
 			} else {
-				MM_AUD_ERR("%s: Set confg called in state %d\n",
+				pr_aud_err("%s: Set confg called in state %d\n",
 				       __func__, audio->state);
 
 				rc = -EPERM;
@@ -1232,7 +1231,7 @@ static long audio_mvs_ioctl(struct file *file,
 
 			mutex_unlock(&audio->lock);
 		} else {
-			MM_AUD_ERR("%s: Config copy failed %d\n", __func__, rc);
+			pr_aud_err("%s: Config copy failed %d\n", __func__, rc);
 		}
 
 		break;
@@ -1250,7 +1249,7 @@ static long audio_mvs_ioctl(struct file *file,
 			if (rc != 0)
 				audio_mvs_stop(audio);
 		} else {
-			MM_AUD_ERR("%s: Start called in invalid state %d\n",
+			pr_aud_err("%s: Start called in invalid state %d\n",
 			       __func__, audio->state);
 
 			rc = -EPERM;
@@ -1269,7 +1268,7 @@ static long audio_mvs_ioctl(struct file *file,
 		if (audio->state == AUDIO_MVS_STARTED) {
 			rc = audio_mvs_stop(audio);
 		} else {
-			MM_AUD_ERR("%s: Stop called in invalid state %d\n",
+			pr_aud_err("%s: Stop called in invalid state %d\n",
 			       __func__, audio->state);
 
 			rc = -EPERM;
@@ -1280,7 +1279,7 @@ static long audio_mvs_ioctl(struct file *file,
 	}
 
 	default: {
-		MM_AUD_ERR("%s: Unknown IOCTL %d\n", __func__, cmd);
+		pr_aud_err("%s: Unknown IOCTL %d\n", __func__, cmd);
 	}
 	}
 
@@ -1306,7 +1305,7 @@ static int __init audio_mvs_init(void)
 {
 	int rc;
 
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	memset(&audio_mvs_info, 0, sizeof(audio_mvs_info));
 	mutex_init(&audio_mvs_info.lock);
@@ -1368,7 +1367,7 @@ static int __init audio_mvs_init(void)
 
 static void __exit audio_mvs_exit(void)
 {
-	MM_AUD_INFO("%s:\n", __func__);
+	pr_aud_info("%s:\n", __func__);
 
 	misc_deregister(&audio_mvs_misc);
 }
