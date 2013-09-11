@@ -96,7 +96,7 @@ static int adsp_pmem_check(struct msm_adsp_module *module,
 	hlist_for_each_entry(region_elt, node, &module->pmem_regions, list) {
 		if (CONTAINS(region_elt, &t) || CONTAINS(&t, region_elt) ||
 		    OVERLAPS(region_elt, &t)) {
-			pr_aud_err("module %s:"
+			MM_AUD_ERR("module %s:"
 				" region (vaddr %p len %ld)"
 				" clashes with registered region"
 				" (vaddr %p paddr %p len %ld)\n",
@@ -178,7 +178,7 @@ static int adsp_pmem_lookup_vaddr(struct msm_adsp_module *module, void **addr,
 	}
 
 	if (match_count > 1) {
-		pr_aud_err("module %s: "
+		MM_AUD_ERR("module %s: "
 			"multiple hits for vaddr %p, len %ld\n",
 			module->name, vaddr, len);
 		hlist_for_each_entry(region_elt, node,
@@ -186,7 +186,7 @@ static int adsp_pmem_lookup_vaddr(struct msm_adsp_module *module, void **addr,
 			if (vaddr >= region_elt->vaddr &&
 			    vaddr < region_elt->vaddr + region_elt->len &&
 			    vaddr + len <= region_elt->vaddr + region_elt->len)
-				pr_aud_err("%p, %ld --> %p\n",
+				MM_AUD_ERR("%p, %ld --> %p\n",
 					region_elt->vaddr,
 					region_elt->len,
 					(void *)region_elt->paddr);
@@ -206,7 +206,7 @@ int adsp_pmem_fixup_kvaddr(struct msm_adsp_module *module, void **addr,
 
 	ret = adsp_pmem_lookup_vaddr(module, addr, len, &region);
 	if (ret) {
-		pr_aud_err("not patching %s (paddr & kvaddr),"
+		MM_AUD_ERR("not patching %s (paddr & kvaddr),"
 			" lookup (%p, %ld) failed\n",
 			module->name, vaddr, len);
 		return ret;
@@ -226,7 +226,7 @@ int adsp_pmem_fixup(struct msm_adsp_module *module, void **addr,
 
 	ret = adsp_pmem_lookup_vaddr(module, addr, len, &region);
 	if (ret) {
-		pr_aud_err("not patching %s, lookup (%p, %ld) failed\n",
+		MM_AUD_ERR("not patching %s, lookup (%p, %ld) failed\n",
 			module->name, vaddr, len);
 		return ret;
 	}
@@ -244,7 +244,7 @@ static int adsp_verify_cmd(struct msm_adsp_module *module,
 		return module->verify_cmd(module, queue_id, cmd_data,
 					     cmd_size);
 	else
-		pr_aud_info("no packet verifying function "
+		MM_AUD_INFO("no packet verifying function "
 				 "for task %s\n", module->name);
 	return 0;
 }
@@ -274,7 +274,7 @@ static long adsp_write_cmd(struct adsp_device *adev, void __user *arg)
 
 	mutex_lock(&adev->module->pmem_regions_lock);
 	if (adsp_verify_cmd(adev->module, cmd.queue, cmd_data, cmd.len)) {
-		pr_aud_err("module %s: verify failed.\n", adev->module->name);
+		MM_AUD_ERR("module %s: verify failed.\n", adev->module->name);
 		rc = -EINVAL;
 		goto end;
 	}
@@ -324,7 +324,7 @@ int adsp_pmem_paddr_fixup(struct msm_adsp_module *module, void **addr)
 
 	ret = adsp_pmem_lookup_paddr(module, addr, &region);
 	if (ret) {
-		pr_aud_err("not patching %s, paddr %p lookup failed\n",
+		MM_AUD_ERR("not patching %s, paddr %p lookup failed\n",
 			module->name, vaddr);
 		return ret;
 	}
@@ -449,7 +449,7 @@ static long adsp_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return msm_adsp_disable_event_rsp(adev->module);
 
 	case ADSP_IOCTL_DISABLE_ACK:
-		pr_aud_err("ADSP_IOCTL_DISABLE_ACK is not implemented\n");
+		MM_AUD_ERR("ADSP_IOCTL_DISABLE_ACK is not implemented\n");
 		break;
 
 	case ADSP_IOCTL_WRITE_COMMAND:
@@ -492,7 +492,7 @@ static int adsp_release(struct inode *inode, struct file *filp)
 	struct msm_adsp_module *module = adev->module;
 	int rc = 0;
 
-	pr_aud_info("release '%s'\n", adev->name);
+	MM_AUD_INFO("release '%s'\n", adev->name);
 
 	/* clear module before putting it to avoid race with open() */
 	adev->module = NULL;
@@ -511,13 +511,13 @@ static void adsp_event(void *driver_data, unsigned id, size_t len,
 	unsigned long flags;
 
 	if (len > ADSP_EVENT_MAX_SIZE) {
-		pr_aud_err("event too large (%d bytes)\n", len);
+		MM_AUD_ERR("event too large (%d bytes)\n", len);
 		return;
 	}
 
 	event = kmalloc(sizeof(*event), GFP_ATOMIC);
 	if (!event) {
-		pr_aud_err("cannot allocate buffer\n");
+		MM_AUD_ERR("cannot allocate buffer\n");
 		return;
 	}
 
@@ -559,13 +559,13 @@ static int adsp_open(struct inode *inode, struct file *filp)
 	if (!adev)
 		return -ENODEV;
 
-	pr_aud_info("open '%s'\n", adev->name);
+	MM_AUD_INFO("open '%s'\n", adev->name);
 
 	rc = msm_adsp_get(adev->name, &adev->module, &adsp_ops, adev);
 	if (rc)
 		return rc;
 
-	pr_aud_info("opened module '%s' adev %p\n", adev->name, adev);
+	MM_AUD_INFO("opened module '%s' adev %p\n", adev->name, adev);
 	filp->private_data = adev;
 	adev->abort = 0;
 	INIT_HLIST_HEAD(&adev->module->pmem_regions);

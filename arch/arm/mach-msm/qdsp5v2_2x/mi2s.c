@@ -24,6 +24,7 @@
 
 #include <mach/qdsp5v2_2x/mi2s.h>
 #include <mach/qdsp5v2_2x/audio_dev_ctl.h>
+#include <mach/debug_mm.h>
 
 #define DEBUG
 #ifdef DEBUG
@@ -450,7 +451,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	if ((channels == 0) ||  (channels > MAX_NUM_CHANNELS_OUT) ||
 		((channels != 1) && (channels % 2 != 0))) {
 
-		pr_aud_err("%s: invalid number of channels. channels = %u\n",
+		MM_AUD_ERR("%s: invalid number of channels. channels = %u\n",
 				__func__, channels);
 		return  MI2S_FALSE;
 	}
@@ -458,7 +459,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	sd_line_mask &=  MI2S_SD_LINE_MASK;
 
 	if (!sd_line_mask) {
-		pr_aud_err("%s: Did not set any data lines to use "
+		MM_AUD_ERR("%s: Did not set any data lines to use "
 			" sd_line_mask =0x%x\n", __func__, sd_line_mask);
 		return  MI2S_FALSE;
 	}
@@ -488,7 +489,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	if (channels == 1) {
 
 		if (num_of_sd_lines != 1) {
-			pr_aud_err("%s: for one channel only one SD lines is"
+			MM_AUD_ERR("%s: for one channel only one SD lines is"
 				" needed. num_of_sd_lines = %u\n",
 				__func__, num_of_sd_lines);
 
@@ -497,7 +498,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 		}
 
 		if (sd_line != 0) {
-			pr_aud_err("%s: for one channel tx, need to use SD_0 "
+			MM_AUD_ERR("%s: for one channel tx, need to use SD_0 "
 					"sd_line = %u\n", __func__, sd_line);
 
 			ret_val = MI2S_FALSE;
@@ -512,7 +513,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	} else if (channels == 2) {
 
 		if (num_of_sd_lines != 1) {
-			pr_aud_err("%s: for two channel only one SD lines is"
+			MM_AUD_ERR("%s: for two channel only one SD lines is"
 				" needed. num_of_sd_lines = %u\n",
 				__func__, num_of_sd_lines);
 			ret_val = MI2S_FALSE;
@@ -529,7 +530,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	} else if (channels == 4) {
 
 		if (num_of_sd_lines != 2) {
-			pr_aud_err("%s: for 4 channels two SD lines are"
+			MM_AUD_ERR("%s: for 4 channels two SD lines are"
 				" needed. num_of_sd_lines = %u\\n",
 				__func__, num_of_sd_lines);
 			ret_val = MI2S_FALSE;
@@ -554,7 +555,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 			mi2s_set_output_4ch_map(mi2s, HDMI, MI2S_TRUE);
 		} else {
 
-			pr_aud_err("%s: for 4 channels invalid SD lines usage"
+			MM_AUD_ERR("%s: for 4 channels invalid SD lines usage"
 				" sd_line_mask = 0x%x\n",
 				__func__, sd_line_mask);
 			ret_val = MI2S_FALSE;
@@ -563,7 +564,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	} else if (channels == 6) {
 
 		if (num_of_sd_lines != 3) {
-			pr_aud_err("%s: for 6 channels three SD lines are"
+			MM_AUD_ERR("%s: for 6 channels three SD lines are"
 				" needed. num_of_sd_lines = %u\n",
 				__func__, num_of_sd_lines);
 			ret_val = MI2S_FALSE;
@@ -590,7 +591,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 
 		} else {
 
-			pr_aud_err("%s: for 6 channels invalid SD lines usage"
+			MM_AUD_ERR("%s: for 6 channels invalid SD lines usage"
 				" sd_line_mask = 0x%x\n",
 				__func__, sd_line_mask);
 			ret_val = MI2S_FALSE;
@@ -599,7 +600,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 	} else if (channels == 8) {
 
 		if (num_of_sd_lines != 4) {
-			pr_aud_err("%s: for 8 channels four SD lines are"
+			MM_AUD_ERR("%s: for 8 channels four SD lines are"
 				" needed. num_of_sd_lines = %u\n",
 				__func__, num_of_sd_lines);
 			ret_val = MI2S_FALSE;
@@ -612,7 +613,7 @@ bool mi2s_set_hdmi_output_path(uint8_t channels, uint8_t size,
 			MI2S_SD_1_TX_MAP | MI2S_SD_2_TX_MAP |
 			MI2S_SD_3_TX_MAP));
 	} else {
-		pr_aud_err("%s: invalid number channels = %u\n",
+		MM_AUD_ERR("%s: invalid number channels = %u\n",
 				__func__, channels);
 			ret_val = MI2S_FALSE;
 			goto error;
@@ -650,14 +651,14 @@ bool mi2s_set_hdmi_input_path(uint8_t channels, uint8_t size,
 
 	if ((channels != 1) && (channels != MAX_NUM_CHANNELS_IN)) {
 
-		pr_aud_err("%s: invalid number of channels. channels = %u\n",
+		MM_AUD_ERR("%s: invalid number of channels. channels = %u\n",
 				__func__, channels);
 		return  MI2S_FALSE;
 	}
 
 	if (size > WT_MAX) {
 
-		pr_aud_err("%s: mi2s word size can not be greater than 32 bits\n",
+		MM_AUD_ERR("%s: mi2s word size can not be greater than 32 bits\n",
 				__func__);
 		return MI2S_FALSE;
 	}
@@ -665,7 +666,7 @@ bool mi2s_set_hdmi_input_path(uint8_t channels, uint8_t size,
 	sd_line_mask &=  MI2S_SD_LINE_MASK;
 
 	if (!sd_line_mask) {
-		pr_aud_err("%s: Did not set any data lines to use "
+		MM_AUD_ERR("%s: Did not set any data lines to use "
 			" sd_line_mask =0x%x\n", __func__, sd_line_mask);
 		return  MI2S_FALSE;
 	}
@@ -673,7 +674,7 @@ bool mi2s_set_hdmi_input_path(uint8_t channels, uint8_t size,
 	num_of_sd_lines = num_of_bits_set(sd_line_mask);
 
 	if (num_of_sd_lines != 1) {
-		pr_aud_err("%s: for two channel input only one SD lines is"
+		MM_AUD_ERR("%s: for two channel input only one SD lines is"
 			" needed. num_of_sd_lines = %u sd_line_mask = 0x%x\n",
 			__func__, num_of_sd_lines, sd_line_mask);
 		return MI2S_FALSE;
@@ -684,7 +685,7 @@ bool mi2s_set_hdmi_input_path(uint8_t channels, uint8_t size,
 
 	/* Ensure sd_line parameter is valid (0-max) */
 	if (sd_line > MAX_SD_LINES) {
-		pr_aud_err("%s: Line number can not be greater than = %u\n",
+		MM_AUD_ERR("%s: Line number can not be greater than = %u\n",
 			__func__, MAX_SD_LINES);
 		return MI2S_FALSE;
 	}

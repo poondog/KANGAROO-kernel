@@ -202,11 +202,11 @@ static void audpreproc_dsp_event(void *data, unsigned id, size_t len,
 		break;
 	}
 	case ADSP_MESSAGE_ID: {
-		pr_aud_info("audpreproc: enable/disable done\n");
+		MM_AUD_INFO("audpreproc: enable/disable done\n");
 		break;
 	}
 	default:
-		pr_aud_info("Unknown Event %d\n", id);
+		MM_AUD_INFO("Unknown Event %d\n", id);
 	}
 	return;
 }
@@ -239,7 +239,7 @@ int audpreproc_enable(int enc_id, audpreproc_event_func func, void *private)
 		res = msm_adsp_get("AUDPREPROCTASK", &audpreproc->mod,
 				&adsp_ops, audpreproc);
 		if (res < 0) {
-			pr_aud_err("Can not get AUDPREPROCTASK\n");
+			MM_AUD_ERR("Can not get AUDPREPROCTASK\n");
 			audpreproc->open_count = 0;
 			audpreproc->func[enc_id] = NULL;
 			audpreproc->private[enc_id] = NULL;
@@ -247,7 +247,7 @@ int audpreproc_enable(int enc_id, audpreproc_event_func func, void *private)
 		}
 		prevent_suspend();
 		if (msm_adsp_enable(audpreproc->mod)) {
-			pr_aud_err("Can not enable AUDPREPROCTASK\n");
+			MM_AUD_ERR("Can not enable AUDPREPROCTASK\n");
 			audpreproc->open_count = 0;
 			audpreproc->func[enc_id] = NULL;
 			audpreproc->private[enc_id] = NULL;

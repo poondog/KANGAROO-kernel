@@ -124,20 +124,20 @@ int aux_pcm_gpios_request(void)
 	MM_DBG("aux_pcm_gpios_request\n");
 	rc = gpio_request(the_aux_pcm_state.dout, "AUX PCM DOUT");
 	if (rc) {
-		pr_aud_err("GPIO request for AUX PCM DOUT failed\n");
+		MM_AUD_ERR("GPIO request for AUX PCM DOUT failed\n");
 		return rc;
 	}
 
 	rc = gpio_request(the_aux_pcm_state.din, "AUX PCM DIN");
 	if (rc) {
-		pr_aud_err("GPIO request for AUX PCM DIN failed\n");
+		MM_AUD_ERR("GPIO request for AUX PCM DIN failed\n");
 		gpio_free(the_aux_pcm_state.dout);
 		return rc;
 	}
 
 	rc = gpio_request(the_aux_pcm_state.syncout, "AUX PCM SYNC OUT");
 	if (rc) {
-		pr_aud_err("GPIO request for AUX PCM SYNC OUT failed\n");
+		MM_AUD_ERR("GPIO request for AUX PCM SYNC OUT failed\n");
 		gpio_free(the_aux_pcm_state.dout);
 		gpio_free(the_aux_pcm_state.din);
 		return rc;
@@ -145,7 +145,7 @@ int aux_pcm_gpios_request(void)
 
 	rc = gpio_request(the_aux_pcm_state.clkin_a, "AUX PCM CLKIN A");
 	if (rc) {
-		pr_aud_err("GPIO request for AUX PCM CLKIN A failed\n");
+		MM_AUD_ERR("GPIO request for AUX PCM CLKIN A failed\n");
 		gpio_free(the_aux_pcm_state.dout);
 		gpio_free(the_aux_pcm_state.din);
 		gpio_free(the_aux_pcm_state.syncout);
@@ -191,7 +191,7 @@ static int get_aux_pcm_gpios(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO,
 					"aux_pcm_dout");
 	if  (!res) {
-		pr_aud_err("%s: failed to get gpio AUX PCM DOUT\n", __func__);
+		MM_AUD_ERR("%s: failed to get gpio AUX PCM DOUT\n", __func__);
 		return -ENODEV;
 	}
 
@@ -200,7 +200,7 @@ static int get_aux_pcm_gpios(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO,
 					"aux_pcm_din");
 	if  (!res) {
-		pr_aud_err("%s: failed to get gpio AUX PCM DIN\n", __func__);
+		MM_AUD_ERR("%s: failed to get gpio AUX PCM DIN\n", __func__);
 		return -ENODEV;
 	}
 
@@ -209,7 +209,7 @@ static int get_aux_pcm_gpios(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO,
 					"aux_pcm_syncout");
 	if  (!res) {
-		pr_aud_err("%s: failed to get gpio AUX PCM SYNC OUT\n", __func__);
+		MM_AUD_ERR("%s: failed to get gpio AUX PCM SYNC OUT\n", __func__);
 		return -ENODEV;
 	}
 
@@ -218,7 +218,7 @@ static int get_aux_pcm_gpios(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO,
 					"aux_pcm_clkin_a");
 	if  (!res) {
-		pr_aud_err("%s: failed to get gpio AUX PCM CLKIN A\n", __func__);
+		MM_AUD_ERR("%s: failed to get gpio AUX PCM CLKIN A\n", __func__);
 		return -ENODEV;
 	}
 
@@ -248,7 +248,7 @@ static int aux_pcm_probe(struct platform_device *pdev)
 	}
 	rc = get_aux_pcm_gpios(pdev);
 	if (rc) {
-		pr_aud_err("GPIO configuration failed\n");
+		MM_AUD_ERR("GPIO configuration failed\n");
 		rc = -ENODEV;
 	}
 
