@@ -4,7 +4,6 @@ obj-y += io.o dma.o memory.o timer.o
 obj-y += clock.o clock-voter.o clock-dummy.o
 obj-y += subsystem_map.o
 obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
-obj-$(CONFIG_DEBUG_FS) += nohlt.o clock-debug.o
 obj-$(CONFIG_KEXEC) += msm_kexec.o
 obj-$(CONFIG_ROM_TYPE) += romtype.o
 
@@ -16,7 +15,6 @@ ifndef CONFIG_ARCH_MSM8X60
 ifndef CONFIG_ARCH_FSM9XXX
 		obj-$(CONFIG_REGULATOR) += footswitch-pcom.o
 endif
-		obj-$(CONFIG_DEBUG_FS) += pmic_debugfs.o
 	endif
 endif
 
@@ -56,7 +54,6 @@ msm-etm-objs := cp14.o etm.o
 obj-$(CONFIG_MSM_ETM) += msm-etm.o
 
 ifdef CONFIG_MSM_QDSS
-	obj-y += qdss-debug.o
 	obj-y += qdss-etb.o qdss-tpiu.o
 	obj-y += qdss-funnel.o
 	obj-y += qdss-ptm.o
@@ -131,9 +128,9 @@ else # Else CONFIG_ARCH_MSM7X30_SMD
 obj-y += modem_notifier.o
 obj-$(CONFIG_MSM_SMD_LOGGING) += smem_log.o
 ifeq ($(CONFIG_ARCH_MSM7X27A),y)
-obj-$(CONFIG_MSM_SMD) += smd.o smd_7x2x_debug.o
+obj-$(CONFIG_MSM_SMD) += smd.o
 else # Else CONFIG_ARCH_MSM7X27A
-obj-$(CONFIG_MSM_SMD) += smd.o smd_debug.o
+obj-$(CONFIG_MSM_SMD) += smd.o
 endif # End CONFIG_ARCH_MSM7X27A
 obj-$(CONFIG_MSM_SMD_TTY) += smd_tty.o
 obj-$(CONFIG_MSM_SMD_QMI) += smd_qmi.o
@@ -141,7 +138,6 @@ obj-$(CONFIG_MSM_SMD_PKT) += smd_pkt.o
 obj-$(CONFIG_MSM_SMD_NMEA) += smd_nmea.o
 obj-$(CONFIG_MSM_ONCRPCROUTER) += smd_rpcrouter.o
 obj-$(CONFIG_MSM_ONCRPCROUTER) += smd_rpcrouter_device.o
-obj-$(CONFIG_DEBUG_FS) += smd_rpc_sym.o
 obj-$(CONFIG_MSM_ONCRPCROUTER) += smd_rpcrouter_servers.o
 obj-$(CONFIG_MSM_ONCRPCROUTER) += smd_rpcrouter_clients.o
 obj-$(CONFIG_MSM_ONCRPCROUTER) += smd_rpcrouter_xdr.o
