@@ -884,7 +884,7 @@ struct platform_device msm_device_vidc_720p = {
 	},
 };
 
-#if defined(CONFIG_MSM_MDP40)
+#if defined(CONFIG_FB_MSM_MDP40)
 #define MDP_BASE          0xA3F00000
 #define PMDH_BASE         0xAD600000
 #define EMDH_BASE         0xAD700000
@@ -1185,15 +1185,15 @@ struct resource kgsl_3d0_resources[] = {
 static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.pwrlevel = {
 		{
-			.gpu_freq = 353280000,
+			.gpu_freq = 245760000,
 			.bus_freq = 192000000,
 		},
 		{
-			.gpu_freq = 299520000,
+			.gpu_freq = 192000000,
 			.bus_freq = 152000000,
 		},
 		{
-			.gpu_freq = 245760000,
+			.gpu_freq = 192000000,
 			.bus_freq = 0,
 		},
 	},
@@ -1201,7 +1201,8 @@ static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.num_levels = 3,
 	.set_grp_async = set_grp3d_async,
 	.idle_timeout = HZ/20,
-	.nap_allowed = false,
+	.nap_allowed = true,
+	.idle_needed = true,
 	.clk_map = KGSL_CLK_SRC | KGSL_CLK_CORE |
 		KGSL_CLK_IFACE | KGSL_CLK_MEM,
 };
@@ -1243,7 +1244,7 @@ static struct kgsl_device_platform_data kgsl_2d0_pdata = {
 	/* HW workaround, run Z180 SYNC @ 192 MHZ */
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/10,
-	.nap_allowed = false,
+	.nap_allowed = true,
 	.idle_needed = true,
 	.clk_map = KGSL_CLK_CORE | KGSL_CLK_IFACE,
 };
