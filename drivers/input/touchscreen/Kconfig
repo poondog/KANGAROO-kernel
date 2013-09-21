@@ -76,22 +76,6 @@ config TOUCHSCREEN_ATMEL_SWEEP2WAKE_ENABLED_WITH_BACKLIGHT
 
 endchoice
 
-config TOUCHSCREEN_ATMEL_SWEEP2WAKE_START
-	depends on TOUCHSCREEN_ATMEL_SWEEP2WAKE
-	string "Sweep2Wake start button name"
-	default "HOME"
-	---help---
-	  	This option sets the ATMEL sweep2wake start button startup settings.
-		If in doubt, set to HOME.
-
-config TOUCHSCREEN_ATMEL_SWEEP2WAKE_END
-	depends on TOUCHSCREEN_ATMEL_SWEEP2WAKE
-	string "Sweep2Wake end button name"
-	default "SEARCH"
-	---help---
-	  	This option sets the ATMEL sweep2wake end button startup settings.
-		If in doubt, set to SEARCH.
-
 config TOUCHSCREEN_NTRIG
 	tristate "N-trig spi touchscreen"
 	depends on SPI_TOUCHSCREEN_NTRIG

@@ -354,7 +354,7 @@ static int elan_ktf2k_diag_open_v2(struct i2c_client *client, uint8_t diag_comma
 				0x00, 0x00, 0x00, 0x00, 0x00},
 		},
 	};
-	uint8_t i;
+	uint8_t i=0;
 
 	if (diag_command == TEST_MODE_DV)
 		i = 0;
@@ -1113,7 +1113,7 @@ static void elan_ktf2k_ts_report_data(struct i2c_client *client, uint8_t *buf)
 	uint16_t x, y, z, w;
 	uint8_t i, idx;
 	uint8_t finger_count, finger_pressed;
-	uint8_t finger_press_changed, finger_release_changed;
+	uint8_t finger_press_changed=0, finger_release_changed=0;
 
 	finger_count = buf[IDX_NUM] & 0x7;
 	finger_pressed = buf[IDX_NUM] >> 3;
