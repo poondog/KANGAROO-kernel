@@ -29,6 +29,7 @@
 #include <linux/time.h>
 #include <linux/vmalloc.h>
 #include "logger.h"
+#include "logger_interface.h"
 
 #include <asm/ioctls.h>
 
@@ -320,6 +321,12 @@ static void do_write_log(struct logger_log *log, const void *buf, size_t count)
 {
 	size_t len;
 
+	// if logger mode is disabled, terminate instantly
+	if (logger_mode == 0)
+	{
+			return;
+	} 
+        
 	len = min(count, log->size - log->w_off);
 	memcpy(log->buffer + log->w_off, buf, len);
 
@@ -342,6 +349,12 @@ static ssize_t do_write_log_from_user(struct logger_log *log,
 				      const void __user *buf, size_t count)
 {
 	size_t len;
+
+	// if logger mode is disabled, terminate instantly
+	if (logger_mode == 0)
+	{
+			return 0;
+	} 
 
 	len = min(count, log->size - log->w_off);
 	if (len && copy_from_user(log->buffer + log->w_off, buf, len))
