@@ -255,7 +255,8 @@ HOSTCXX      = g++
 
 ifdef CONFIG_CC_OPTIMIZE_ALOT
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -ftree-vectorize -fomit-frame-pointer
-HOSTCXXFLAGS = -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -march=armv7-a -mtune=cortex-a8 -marm -mfpu=neon -ftree-vectorize
+HOSTCXXFLAGS = -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -march=armv7-a -mtune=cortex-a8 -marm -mfpu=neon-vfpv4 -ftree-vectorize
+
 else
 ifdef CONFIG_CC_OPTIMIZE_FAST
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -ftree-vectorize -fomit-frame-pointer
@@ -368,12 +369,12 @@ CC		= $(REAL_CC)
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-MODFLAGS 	= -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -munaligned-access -fno-pic -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops	
+MODFLAGS 	= -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -munaligned-access -fno-pic -mfpu=neon-vfpv4 -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops	
 CFLAGS_MODULE 	= $(MODFLAGS)	
 AFLAGS_MODULE 	= $(MODFLAGS)
 LDFLAGS_MODULE 	= -T $(srctree)/scripts/module-common.lds
-CFLAGS_KERNEL 	= -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops	
-AFLAGS_KERNEL 	= -fgcse -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize	
+CFLAGS_KERNEL 	= -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon-vfpv4 -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops	
+AFLAGS_KERNEL 	= -fgcse -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon-vfpv4 -ftree-vectorize	
 CFLAGS_GCOV 	= -fprofile-arcs -ftest-coverage
 
 
@@ -384,13 +385,13 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
                    $(if $(KBUILD_SRC), -I$(srctree)/include) \
                    -include include/generated/autoconf.h
 
-KBUILD_CPPFLAGS := -D__KERNEL__ -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a15 -marm -march=armv7-a -mfpu=neon -ftree-vectorize
+KBUILD_CPPFLAGS := -D__KERNEL__ -O3 -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant -mtune=cortex-a15 -marm -march=armv7-a -mfpu=neon-vfpv4 -ftree-vectorize
 
 #
 # AK LINARO OPT
 #
 
-CFLAGS_A8 = -march=armv7-a -mtune=cortex-a8 -mfpu=neon -funsafe-math-optimizations
+CFLAGS_A8 = -march=armv7-a -mtune=cortex-a8 -mfpu=neon-vfpv4 -funsafe-math-optimizations
 CFLAGS_MODULO = -fmodulo-sched -fmodulo-sched-allow-regmoves
 KERNEL_MODS	= $(CFLAGS_A8) $(CFLAGS_MODULO)
 
@@ -399,9 +400,12 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
-		   -ftree-vectorize \
+		   -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
+		   -funsafe-math-optimizations -ftree-partial-pre \
 		   -mno-unaligned-access \
 		   -Wno-sizeof-pointer-memaccess \
+		   -fipa-cp-clone -fsingle-precision-constant -pipe \
+		   -funswitch-loops -floop-interchange -floop-strip-mine -floop-block -O3 \
 		   $(KERNEL_MODS)
 
 ifdef CONFIG_CC_GRAPHITE_OPTIMIZATION
@@ -414,10 +418,10 @@ KBUILD_CFLAGS	+= -flto -fno-toplevel-reorder
 endif
 
 KBUILD_AFLAGS_KERNEL :=
-KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
+KBUILD_CFLAGS_KERNEL := -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon-vfpv4 -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
-KBUILD_CFLAGS_MODULE  := -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
+KBUILD_CFLAGS_MODULE  := -DMODULE -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -mtune=cortex-a8 -march=armv7-a -mfpu=neon-vfpv4 -ftree-vectorize -mvectorize-with-neon-quad -funroll-loops
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 
