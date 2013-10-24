@@ -60,6 +60,7 @@ ENDPROC(cpu_v7_proc_fin)
  *
  *	- loc   - location to jump to for soft reset
  */
+	.arch_extension sec
 	.align	5
 ENTRY(cpu_v7_reset)
 	mrc     p15, 0, r1, c1, c0, 0           @ ctrl register
