@@ -191,31 +191,31 @@ static void voice_auddev_cb_function(u32 evt_id,
 		}
 		break;
 	case AUDDEV_EVT_DEV_CHG_VOICE:
-		pr_info("[dev ctrl] AUDDEV_EVT_DEV_CHG_VOICE\n");
+		pr_aud_info("[dev ctrl] AUDDEV_EVT_DEV_CHG_VOICE\n");
 		if (v->dev_state == DEV_READY) {
 			v->dev_rx.enabled = VOICE_DEV_DISABLED;
 			v->dev_tx.enabled = VOICE_DEV_DISABLED;
 			v->dev_state = DEV_CHANGE;
-			pr_info("dev_state -> DEV_CHANGE\n");
+			pr_aud_info("dev_state -> DEV_CHANGE\n");
 			if (v->voc_state == VOICE_ACQUIRE) {
 				msm_snddev_enable_sidetone(v->dev_rx.dev_id,
 				0);
 				/* send device change to modem */
 				voice_cmd_change();
 				/* block to wait for CHANGE_START */
-				pr_info("start waiting for "
+				pr_aud_info("start waiting for "
 					"voc_state -> VOICE_CHANGE\n");
 				/*Add timeout for wait event interruptible*/
 				rc = wait_event_interruptible_timeout(
 				v->voc_wait, (v->voc_state == VOICE_CHANGE)
 				|| (atomic_read(&v->rel_start_flag) == 1), msecs_to_jiffies(1000));
 				if (rc == 0) {
-					pr_info("wait timeout, voc_state = %d\n", v->voc_state);
+					pr_aud_info("wait timeout, voc_state = %d\n", v->voc_state);
 					return;
 				}
 				pr_aud_info("wait done, voc_state = %d\n", v->voc_state);
 			} else {
-				MM_ERR("Get AUDDEV_EVT_DEV_CHG_VOICE "
+				pr_aud_info("Get AUDDEV_EVT_DEV_CHG_VOICE "
 				       "at improper voc_state %d\n", v->voc_state);
 				voice_cmd_change();
 			}
@@ -737,26 +737,29 @@ static int voice_thread(void *data)
 				if ((v->dev_state == DEV_REL_DONE) ||
 					(v->dev_state == DEV_INIT)) {
 					v->voc_state = VOICE_RELEASE;
-					pr_info("voc_state -> VOICE_RELEASE\n");
-					msm_snddev_withdraw_freq(0, SNDDEV_CAP_TX, AUDDEV_CLNT_VOC);
-                                        broadcast_event(AUDDEV_EVT_VOICE_STATE_CHG,
-                                                VOICE_STATE_OFFCALL,SESSION_IGNORE);
+					pr_aud_info("voc_state -> VOICE_RELEASE\n");
+					msm_snddev_withdraw_freq(0, SNDDEV_CAP_TX,
+						AUDDEV_CLNT_VOC);
 				} else {
 					/* wait for the dev_state = RELEASE */
-					pr_info("start waiting for "
+					pr_aud_info("start waiting for "
 						"dev_state -> DEV_REL_DONE\n");
-					rc = wait_event_interruptible(v->dev_wait,
+					/* add timeout for wait event interrupt */
+					rc = wait_event_interruptible_timeout(v->dev_wait,
 						(v->dev_state == DEV_REL_DONE)
-						|| (atomic_read(&v->acq_start_flag) == 1));
+						|| (atomic_read(&v->acq_start_flag) == 1), msecs_to_jiffies(1000));
+					if (rc == 0) {
+					pr_aud_info("wait timeout, dev_state = %d\n", v->dev_state);
+					}
 					if (atomic_read(&v->acq_start_flag) == 1)
 						atomic_dec(&v->acq_start_flag);
-					else 
+					else {
 						rc = voice_cmd_release_done(v);
+						pr_aud_info("voc_state -> VOICE_RELEASE\n");
+						msm_snddev_withdraw_freq(0, SNDDEV_CAP_TX,
+							AUDDEV_CLNT_VOC);
+					}
 					v->voc_state = VOICE_RELEASE;
-					pr_info("voc_state -> VOICE_RELEASE\n");
-					msm_snddev_withdraw_freq(0, SNDDEV_CAP_TX,AUDDEV_CLNT_VOC);
-                                        broadcast_event(AUDDEV_EVT_VOICE_STATE_CHG,
-                                                VOICE_STATE_OFFCALL,SESSION_IGNORE);
 				}
 				if (atomic_read(&v->rel_start_flag))
 					atomic_dec(&v->rel_start_flag);

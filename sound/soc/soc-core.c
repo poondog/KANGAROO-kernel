@@ -30,7 +30,6 @@
 #include <linux/bitops.h>
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
-#include <linux/ctype.h>
 #include <linux/slab.h>
 #include <sound/ac97_codec.h>
 #include <sound/core.h>
@@ -792,7 +791,6 @@ int soc_pcm_close(struct snd_pcm_substream *substream)
 	if (platform->driver->ops && platform->driver->ops->close)
 		platform->driver->ops->close(substream);
 	cpu_dai->runtime = NULL;
-	printk(KERN_INFO "[AUD] soc_pcm_close(), set runtume null\n");
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		/* start delayed pop wq here for playback streams */
@@ -1208,11 +1206,6 @@ int snd_soc_suspend(struct device *dev)
 
 	/* close any waiting streams and save state */
 	for (i = 0; i < card->num_rtd; i++) {
-               /* do not flush delayed work to trigger DAPM when DAi is ignore_suspend */
-                if (card->rtd[i].dai_link->ignore_suspend ||
-                                card->rtd[i].dai_link->no_pcm)
-                        continue;
-
 		flush_delayed_work_sync(&card->rtd[i].delayed_work);
 		card->rtd[i].codec->dapm.suspend_bias_level = card->rtd[i].codec->dapm.bias_level;
 	}
@@ -2132,20 +2125,9 @@ static void snd_soc_instantiate_card(struct snd_soc_card *card)
 		 "%s", card->name);
 	snprintf(card->snd_card->longname, sizeof(card->snd_card->longname),
 		 "%s", card->long_name ? card->long_name : card->name);
-	snprintf(card->snd_card->driver, sizeof(card->snd_card->driver),
-		 "%s", card->driver_name ? card->driver_name : card->name);
-	for (i = 0; i < ARRAY_SIZE(card->snd_card->driver); i++) {
-		switch (card->snd_card->driver[i]) {
-		case '_':
-		case '-':
-		case '\0':
-			break;
-		default:
-			if (!isalnum(card->snd_card->driver[i]))
-				card->snd_card->driver[i] = '_';
-			break;
-		}
-	}
+	if (card->driver_name)
+		strlcpy(card->snd_card->driver, card->driver_name,
+			sizeof(card->snd_card->driver));
 
 	if (card->late_probe) {
 		ret = card->late_probe(card);

@@ -8,5 +8,3 @@ ath-objs :=	main.o \
 		regd.o \
 		hw.o \
 		key.o
-
-ath-$(CONFIG_ATH_DEBUG) += debug.o

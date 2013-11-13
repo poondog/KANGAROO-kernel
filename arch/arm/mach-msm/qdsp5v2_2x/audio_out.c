@@ -386,7 +386,6 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	mutex_lock(&audio->lock);
 	switch (cmd) {
 	case AUDIO_START:
-		pr_aud_info("AUDIO_START\n");
 		rc = audio_enable(audio);
 		break;
 	case AUDIO_STOP:
@@ -612,7 +611,7 @@ static int audio_open(struct inode *inode, struct file *file)
 	int rc;
 
 	mutex_lock(&audio->lock);
-	pr_aud_info("host pcm open\n");
+
 	if (audio->opened) {
 		pr_aud_err("busy\n");
 		rc = -EBUSY;

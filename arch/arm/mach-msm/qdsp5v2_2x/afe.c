@@ -121,7 +121,6 @@ int afe_enable(u8 path_id, struct msm_afe_config *config)
 			pr_aud_err("%s: failed to get AFETASK module\n", __func__);
 			goto error_adsp_get;
 		}
-		pr_aud_info("Enabling msm_adsp_enable");
 		rc = msm_adsp_enable(afe->mod);
 		if (rc < 0)
 			goto error_adsp_enable;

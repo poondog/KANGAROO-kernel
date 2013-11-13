@@ -5757,7 +5757,7 @@ static void __init msm7x30_calculate_reserve_sizes(void)
 	reserve_pmem_memory();
 }
 
-static int msm7x30_paddr_to_memtype(unsigned int paddr)
+static int msm7x30_paddr_to_memtype(phys_addr_t paddr)
 {
 	if (paddr < 0x40000000)
 		return MEMTYPE_EBI0;

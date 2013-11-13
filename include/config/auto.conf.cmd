@@ -231,7 +231,6 @@ deps_config := \
 	drivers/hid/Kconfig \
 	sound/oss/Kconfig \
 	sound/soc/codecs/Kconfig \
-	sound/soc/msm_1x/Kconfig \
 	sound/soc/msm/Kconfig \
 	sound/soc/txx9/Kconfig \
 	sound/soc/tegra/Kconfig \
@@ -691,7 +690,7 @@ deps_config := \
 include/config/auto.conf: \
 	$(deps_config)
 
-ifneq "$(KERNELVERSION)" "3.0.86-ck1"
+ifneq "$(KERNELVERSION)" "3.0.101-ck1"
 include/config/auto.conf: FORCE
 endif
 ifneq "$(ARCH)" "arm"
