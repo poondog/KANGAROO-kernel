@@ -89,3 +89,4 @@ arch/arm/boot/compressed/vmlinux
 *.orig
 *~
 \#*#
+

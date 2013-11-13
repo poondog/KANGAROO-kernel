@@ -138,6 +138,7 @@ sd_store_cache_type(struct device *dev, struct device_attribute *attr,
 	char *buffer_data;
 	struct scsi_mode_data data;
 	struct scsi_sense_hdr sshdr;
+
 	static const char temp[] = "temporary ";
 	int len;
 

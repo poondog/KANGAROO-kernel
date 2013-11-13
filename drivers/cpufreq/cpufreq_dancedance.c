@@ -27,6 +27,7 @@
  * It helps to keep variable names smaller, simpler
  */
 
+
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DEF_FREQUENCY_DOWN_THRESHOLD		(35)
 #define MIN_SAMPLING_RATE_RATIO			(2)
