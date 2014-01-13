@@ -48,7 +48,7 @@
 *	difei_ding, 2012.02.01
 *		we use mclk as AIC3008's main clock, need modify mclk enable/disable timing
 */
-#ifdef CONFIG_CODEC_AIC3008
+#if 0
 
 #define AUD_DUMP_CLK
 #ifdef AUD_DUMP_CLK
@@ -286,9 +286,7 @@ static int snddev_icodec_open_rx(struct snddev_icodec_state *icodec)
 
 	printk("%s(): +++\n", __func__);
 	wake_lock(&drv->rx_idlelock);
-//HTC_AUD_START
-#ifndef  CONFIG_CODEC_AIC3008
-//HTC_AUD_END
+
 	/* enable MI2S RX master block */
 	/* enable MI2S RX bit clock */
 	trc = clk_set_rate(drv->rx_mclk,
@@ -298,9 +296,6 @@ static int snddev_icodec_open_rx(struct snddev_icodec_state *icodec)
 
 	clk_enable(drv->rx_mclk);
 	clk_enable(drv->rx_sclk);
-//HTC_AUD_START
-#endif
-//HTC_AUD_END
 	/* clk_set_rate(drv->lpa_codec_clk, 1); */ /* Remove if use pcom */
 	clk_enable(drv->lpa_p_clk);
 	clk_enable(drv->lpa_codec_clk);
@@ -398,24 +393,16 @@ error_lpa:
 	clk_disable(drv->lpa_p_clk);
 	clk_disable(drv->lpa_codec_clk);
 	clk_disable(drv->lpa_core_clk);
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 	clk_disable(drv->rx_sclk);
+
 	clk_disable(drv->rx_mclk);
-#endif
-//HTC_CSP_END
-//HTC_AUD_START
-#ifndef CONFIG_CODEC_AIC3008
-//HTC_AUD_END
+
 error_invalid_freq:
 
-	MM_AUD_ERR("%s: encounter error\n", __func__);
+	pr_aud_err("%s: encounter error\n", __func__);
 
 	wake_unlock(&drv->rx_idlelock);
 	printk("%s(): ---\n", __func__);
-//HTC_AUD_START
-#endif
-//HTC_AUD_END
 	return -ENODEV;
 }
 
@@ -431,9 +418,7 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 	/* Reuse pamp_on for TX platform-specific setup  */
 	if (icodec->data->pamp_on)
 		icodec->data->pamp_on(1);
-//HTC_AUD_START
-#ifndef  CONFIG_CODEC_AIC3008
-//HTC_AUD_END
+
 	/* enable MI2S TX master block */
 	/* enable MI2S TX bit clock */
 	trc = clk_set_rate(drv->tx_mclk,
@@ -442,9 +427,7 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 		goto error_invalid_freq;
 	clk_enable(drv->tx_mclk);
 	clk_enable(drv->tx_sclk);
-//HTC_AUD_START
-#endif
-//HTC_AUD_END
+
 	/* Set MI2S */
 	mi2s_set_codec_input_path((icodec->data->channel_mode ==
 				REAL_STEREO_CHANNEL_MODE ? MI2S_CHAN_STEREO :
@@ -503,29 +486,21 @@ error_afe:
 		icodec->adie_path = NULL;
 	}
 error_adie:
-
-
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 	clk_disable(drv->tx_sclk);
+//HTC_CSP_START
+//#ifndef CONFIG_CODEC_AIC3008
 	clk_disable(drv->tx_mclk);
-#endif
+//#endif
 //HTC_CSP_END
-//HTC_AUD_START
-#ifndef CONFIG_CODEC_AIC3008
-//HTC_AUD_END
 error_invalid_freq:
 
 	if (icodec->data->pamp_on)
 		icodec->data->pamp_on(0);
 
-	MM_AUD_ERR("%s: encounter error\n", __func__);
+	pr_aud_err("%s: encounter error\n", __func__);
 
 	wake_unlock(&drv->tx_idlelock);
 	printk("%s(): ---\n", __func__);
-//HTC_AUD_START
-#endif
-//HTC_AUD_END
 	return -ENODEV;
 }
 
@@ -575,12 +550,9 @@ static int snddev_icodec_close_rx(struct snddev_icodec_state *icodec)
 
 	/* Disable MI2S RX master block */
 	/* Disable MI2S RX bit clock */
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 	clk_disable(drv->rx_sclk);
+
 	clk_disable(drv->rx_mclk);
-#endif
-//HTC_CSP_END
 	icodec->enabled = 0;
 
 	wake_unlock(&drv->rx_idlelock);
@@ -615,11 +587,11 @@ static int snddev_icodec_close_tx(struct snddev_icodec_state *icodec)
 
 	/* Disable MI2S TX master block */
 	/* Disable MI2S TX bit clock */
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 	clk_disable(drv->tx_sclk);
+//HTC_CSP_START
+//#ifndef CONFIG_CODEC_AIC3008
 	clk_disable(drv->tx_mclk);
-#endif
+//#endif
 //HTC_CSP_END
 
 	/* Reuse pamp_off for TX platform-specific setup  */
@@ -657,7 +629,7 @@ static int snddev_icodec_set_device_volume_impl(
 						2 : icodec->data->channel_mode, volume);
 
 			if (rc < 0) {
-				MM_AUD_ERR("%s: unable to set_device_digital_volume for"
+				pr_aud_err("%s: unable to set_device_digital_volume for"
 					"%s volume in percentage = %u\n",
 					__func__, dev_info->name, volume);
 				return rc;
@@ -671,14 +643,14 @@ static int snddev_icodec_set_device_volume_impl(
 							REAL_STEREO_CHANNEL_MODE ?
 						2 : icodec->data->channel_mode, volume);
 			if (rc < 0) {
-				MM_AUD_ERR("%s: unable to set_device_analog_volume for"
+				pr_aud_err("%s: unable to set_device_analog_volume for"
 					"%s volume in percentage = %u\n",
 					__func__, dev_info->name, volume);
 				return rc;
 			}
 		}
 	} else {
-		MM_AUD_ERR("%s: Invalid device volume control\n", __func__);
+		pr_aud_err("%s: Invalid device volume control\n", __func__);
 		return -EPERM;
 	}
 	return rc;
@@ -696,7 +668,7 @@ static int snddev_icodec_open(struct msm_snddev_info *dev_info)
 	}
 
 	icodec = dev_info->private_data;
-	MM_AUD_INFO("snddev_icodec_open: device %s\n", dev_info->name);
+	pr_aud_info("snddev_icodec_open: device %s\n", dev_info->name);
 
 	if (icodec->data->capability & SNDDEV_CAP_RX) {
 		mutex_lock(&drv->rx_lock);
@@ -715,7 +687,7 @@ static int snddev_icodec_open(struct msm_snddev_info *dev_info)
 				rc = snddev_icodec_set_device_volume_impl(
 						dev_info, dev_info->dev_volume);
 		} else {
-			MM_AUD_INFO("snddev_icodec_open failed. %s\n", dev_info->name);
+			pr_aud_info("snddev_icodec_open failed. %s\n", dev_info->name);
 			mutex_unlock(&drv->rx_lock);
 			return rc;
 		}
@@ -737,7 +709,7 @@ static int snddev_icodec_open(struct msm_snddev_info *dev_info)
 				rc = snddev_icodec_set_device_volume_impl(
 						dev_info, dev_info->dev_volume);
 		} else {
-			MM_AUD_INFO("snddev_icodec_open failed. %s\n", dev_info->name);
+			pr_aud_info("snddev_icodec_open failed. %s\n", dev_info->name);
 			mutex_unlock(&drv->tx_lock);
 			return rc;
 		}
@@ -758,7 +730,7 @@ static int snddev_icodec_close(struct msm_snddev_info *dev_info)
 	}
 
 	icodec = dev_info->private_data;
-	MM_AUD_INFO("snddev_icodec_close: device %s\n", dev_info->name);
+	pr_aud_info("snddev_icodec_close: device %s\n", dev_info->name);
 
 	if (icodec->data->capability & SNDDEV_CAP_RX) {
 		mutex_lock(&drv->rx_lock);
@@ -800,7 +772,7 @@ static int snddev_icodec_check_freq(u32 req_freq)
 			(req_freq == 48000)) {
 				rc = 0;
 		} else
-			MM_AUD_INFO("%s: Unsupported Frequency:%d\n", __func__,
+			pr_aud_info("%s: Unsupported Frequency:%d\n", __func__,
 								req_freq);
 		}
 		return rc;
@@ -811,7 +783,7 @@ static int snddev_icodec_set_freq(struct msm_snddev_info *dev_info, u32 rate)
 	int rc;
 	struct snddev_icodec_state *icodec;
 
-	MM_AUD_INFO("%s +++, rate: %d", __func__, rate);
+	pr_aud_info("%s +++, rate: %d", __func__, rate);
 	if (!dev_info) {
 		rc = -EINVAL;
 		goto error;
@@ -822,12 +794,12 @@ static int snddev_icodec_set_freq(struct msm_snddev_info *dev_info, u32 rate)
 	if (support_adie) {
 		if (adie_codec_freq_supported(icodec->data->profile, rate) != 0) {
 			rc = -EINVAL;
-			MM_AUD_INFO("%s fail_1", __func__);
+			pr_aud_info("%s fail_1", __func__);
 			goto error;
 		} else {
 			if (snddev_icodec_check_freq(rate) != 0) {
 				rc = -EINVAL;
-				MM_AUD_INFO("%s fail_2", __func__);
+				pr_aud_info("%s fail_2", __func__);
 				goto error;
 			} else
 				icodec->sample_rate = rate;
@@ -835,7 +807,7 @@ static int snddev_icodec_set_freq(struct msm_snddev_info *dev_info, u32 rate)
 	} else {
 		if (snddev_icodec_check_freq(rate) != 0) {
 			rc = -EINVAL;
-			MM_AUD_INFO("%s fail_3", __func__);
+			pr_aud_info("%s fail_3", __func__);
 			goto error;
 		} else
 			icodec->sample_rate = rate;
@@ -846,11 +818,11 @@ static int snddev_icodec_set_freq(struct msm_snddev_info *dev_info, u32 rate)
 		snddev_icodec_open(dev_info);
 	}
 
-	MM_AUD_INFO("%s ---, sample_rate: %d", __func__, icodec->sample_rate);
+	pr_aud_info("%s ---, sample_rate: %d", __func__, icodec->sample_rate);
 	return icodec->sample_rate;
 
 error:
-	MM_AUD_INFO("%s err, rc: %d", __func__, rc);
+	pr_aud_info("%s err, rc: %d", __func__, rc);
 	return rc;
 }
 
@@ -862,7 +834,7 @@ static int snddev_icodec_enable_sidetone(struct msm_snddev_info *dev_info,
 	struct snddev_icodec_drv_state *drv = &snddev_icodec_drv;
 
 	if (!dev_info) {
-		MM_AUD_ERR("invalid dev_info\n");
+		pr_aud_err("invalid dev_info\n");
 		rc = -EINVAL;
 		goto error;
 	}
@@ -872,7 +844,7 @@ static int snddev_icodec_enable_sidetone(struct msm_snddev_info *dev_info,
 	if (icodec->data->capability & SNDDEV_CAP_RX) {
 		mutex_lock(&drv->rx_lock);
 		if (!drv->rx_active || !dev_info->opened) {
-			MM_AUD_ERR("dev not active\n");
+			pr_aud_err("dev not active\n");
 			rc = -EPERM;
 			mutex_unlock(&drv->rx_lock);
 			goto error;
@@ -881,7 +853,7 @@ static int snddev_icodec_enable_sidetone(struct msm_snddev_info *dev_info,
 		mutex_unlock(&drv->rx_lock);
 	} else {
 		rc = -EINVAL;
-		MM_AUD_ERR("rx device only\n");
+		pr_aud_err("rx device only\n");
 	}
 
 error:
@@ -898,7 +870,7 @@ int snddev_icodec_set_device_volume(struct msm_snddev_info *dev_info,
 	int rc = -EPERM;
 
 	if (!dev_info) {
-		MM_AUD_INFO("%s : device not intilized.\n", __func__);
+		pr_aud_info("%s : device not intilized.\n", __func__);
 		return  -EINVAL;
 	}
 
@@ -907,7 +879,7 @@ int snddev_icodec_set_device_volume(struct msm_snddev_info *dev_info,
 	if (!(icodec->data->dev_vol_type & (SNDDEV_DEV_VOL_DIGITAL
 				| SNDDEV_DEV_VOL_ANALOG))) {
 
-		MM_AUD_INFO("%s : device %s does not support device volume "
+		pr_aud_info("%s : device %s does not support device volume "
 				"control.", __func__, dev_info->name);
 		return -EPERM;
 	}
@@ -947,7 +919,7 @@ static int snddev_icodec_probe(struct platform_device *pdev)
 	pdata = pdev->dev.platform_data;
 	if ((pdata->capability & SNDDEV_CAP_RX) &&
 	   (pdata->capability & SNDDEV_CAP_TX)) {
-		MM_AUD_ERR("%s: invalid device data either RX or TX\n", __func__);
+		pr_aud_err("%s: invalid device data either RX or TX\n", __func__);
 		goto error;
 	}
 	icodec = kzalloc(sizeof(struct snddev_icodec_state), GFP_KERNEL);
@@ -980,12 +952,12 @@ static int snddev_icodec_probe(struct platform_device *pdev)
 	if (first_time) {
 		if (audio_ops->support_aic3254) {
 			support_aic3254 = audio_ops->support_aic3254();
-			MM_AUD_INFO("%s: support_aic3254 = %d\n",
+			pr_aud_info("%s: support_aic3254 = %d\n",
 				__func__, support_aic3254);
 		}
 		if (audio_ops->support_adie) {
 			support_adie = audio_ops->support_adie();
-			MM_AUD_INFO("%s: support_adie = %d\n",
+			pr_aud_info("%s: support_adie = %d\n",
 				__func__, support_adie);
 		}
 		first_time = 0;
@@ -1027,7 +999,7 @@ static struct adie_codec_path *debugfs_tx_adie;
 static int snddev_icodec_debug_open(struct inode *inode, struct file *file)
 {
 	file->private_data = inode->i_private;
-	MM_AUD_INFO("snddev_icodec: debug intf %s\n", (char *) file->private_data);
+	pr_aud_info("snddev_icodec: debug intf %s\n", (char *) file->private_data);
 	return 0;
 }
 
@@ -1044,14 +1016,14 @@ static void debugfs_adie_loopback(u32 loop)
 		clk_enable(drv->rx_mclk);
 		clk_enable(drv->rx_sclk);
 
-		MM_AUD_INFO("%s: configure ADIE RX path\n", __func__);
+		pr_aud_info("%s: configure ADIE RX path\n", __func__);
 		/* Configure ADIE */
 		adie_codec_open(&debug_rx_profile, &debugfs_rx_adie);
 		adie_codec_setpath(debugfs_rx_adie, 8000, 256);
 		adie_codec_proceed_stage(debugfs_rx_adie,
 		ADIE_CODEC_DIGITAL_ANALOG_READY);
 
-		MM_AUD_INFO("%s: Enable Handset Mic bias\n", __func__);
+		pr_aud_info("%s: Enable Handset Mic bias\n", __func__);
 		pmic_hsed_enable(PM_HSED_CONTROLLER_0, PM_HSED_ENABLE_PWM_TCXO);
 		/* enable MI2S TX master block */
 		/* enable MI2S TX bit clock */
@@ -1060,7 +1032,7 @@ static void debugfs_adie_loopback(u32 loop)
 		clk_enable(drv->tx_mclk);
 		clk_enable(drv->tx_sclk);
 
-		MM_AUD_INFO("%s: configure ADIE TX path\n", __func__);
+		pr_aud_info("%s: configure ADIE TX path\n", __func__);
 		/* Configure ADIE */
 		adie_codec_open(&debug_tx_lb_profile, &debugfs_tx_adie);
 		adie_codec_setpath(debugfs_tx_adie, 8000, 256);
@@ -1079,21 +1051,13 @@ static void debugfs_adie_loopback(u32 loop)
 
 		/* Disable MI2S RX master block */
 		/* Disable MI2S RX bit clock */
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 		clk_disable(drv->rx_sclk);
 		clk_disable(drv->rx_mclk);
-#endif
-//HTC_CSP_END
 
 		/* Disable MI2S TX master block */
 		/* Disable MI2S TX bit clock */
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 		clk_disable(drv->tx_sclk);
 		clk_disable(drv->tx_mclk);
-#endif
-//HTC_CSP_START
 	}
 }
 
@@ -1110,7 +1074,7 @@ static void debugfs_afe_loopback(u32 loop)
 		trc = clk_set_rate(drv->rx_mclk,
 		SNDDEV_ICODEC_CLK_RATE(8000));
 		if (IS_ERR_VALUE(trc))
-			MM_AUD_ERR("%s: failed to set clk rate\n", __func__);
+			pr_aud_err("%s: failed to set clk rate\n", __func__);
 		clk_enable(drv->rx_mclk);
 		clk_enable(drv->rx_sclk);
 		clk_enable(drv->lpa_codec_clk);
@@ -1120,21 +1084,21 @@ static void debugfs_afe_loopback(u32 loop)
 		audio_interct_codec(AUDIO_INTERCT_ADSP);
 		/* Set MI2S */
 		mi2s_set_codec_output_path(0, WT_16_BIT);
-		MM_AUD_INFO("%s: configure ADIE RX path\n", __func__);
+		pr_aud_info("%s: configure ADIE RX path\n", __func__);
 		/* Configure ADIE */
 		adie_codec_open(&debug_rx_profile, &debugfs_rx_adie);
 		adie_codec_setpath(debugfs_rx_adie, 8000, 256);
 		afe_config.sample_rate = 8;
 		afe_config.channel_mode = 1;
 		afe_config.volume = AFE_VOLUME_UNITY;
-		MM_AUD_INFO("%s: enable afe\n", __func__);
+		pr_aud_info("%s: enable afe\n", __func__);
 		trc = afe_enable(AFE_HW_PATH_CODEC_RX, &afe_config);
 		if (IS_ERR_VALUE(trc))
-			MM_AUD_ERR("%s: fail to enable afe rx\n", __func__);
+			pr_aud_err("%s: fail to enable afe rx\n", __func__);
 		adie_codec_proceed_stage(debugfs_rx_adie,
 		ADIE_CODEC_DIGITAL_ANALOG_READY);
 
-		MM_AUD_INFO("%s: Enable Handset Mic bias\n", __func__);
+		pr_aud_info("%s: Enable Handset Mic bias\n", __func__);
 		pmic_hsed_enable(PM_HSED_CONTROLLER_0, PM_HSED_ENABLE_PWM_TCXO);
 		/* enable MI2S TX master block */
 		/* enable MI2S TX bit clock */
@@ -1144,7 +1108,7 @@ static void debugfs_afe_loopback(u32 loop)
 		clk_enable(drv->tx_sclk);
 		/* Set MI2S */
 		mi2s_set_codec_input_path(0, WT_16_BIT);
-		MM_AUD_INFO("%s: configure ADIE TX path\n", __func__);
+		pr_aud_info("%s: configure ADIE TX path\n", __func__);
 		/* Configure ADIE */
 		adie_codec_open(&debug_tx_profile, &debugfs_tx_adie);
 		adie_codec_setpath(debugfs_tx_adie, 8000, 256);
@@ -1156,7 +1120,7 @@ static void debugfs_afe_loopback(u32 loop)
 		afe_config.volume = AFE_VOLUME_UNITY;
 		trc = afe_enable(AFE_HW_PATH_CODEC_TX, &afe_config);
 		if (IS_ERR_VALUE(trc))
-			MM_AUD_ERR("%s: failed to enable AFE TX\n", __func__);
+			pr_aud_err("%s: failed to enable AFE TX\n", __func__);
 	} else {
 		/* Disable ADIE */
 		adie_codec_proceed_stage(debugfs_rx_adie,
@@ -1170,21 +1134,14 @@ static void debugfs_afe_loopback(u32 loop)
 
 		/* Disable MI2S RX master block */
 		/* Disable MI2S RX bit clock */
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 		clk_disable(drv->rx_sclk);
 		clk_disable(drv->rx_mclk);
-#endif
-//HTC_CSP_END
+
 
 		/* Disable MI2S TX master block */
 		/* Disable MI2S TX bit clock */
-//HTC_CSP_START
-#ifndef CONFIG_CODEC_AIC3008
 		clk_disable(drv->tx_sclk);
 		clk_disable(drv->tx_mclk);
-#endif
-//HTC_CSP_END
 	}
 }
 
@@ -1197,7 +1154,7 @@ static ssize_t snddev_icodec_debug_write(struct file *filp,
 	if (get_user(cmd, ubuf))
 		return -EFAULT;
 
-	MM_AUD_INFO("%s: %s %c\n", __func__, lb_str, cmd);
+	pr_aud_info("%s: %s %c\n", __func__, lb_str, cmd);
 
 	if (!strcmp(lb_str, "adie_loopback")) {
 		switch (cmd) {
@@ -1298,7 +1255,7 @@ static int __init snddev_icodec_init(void)
 		(void *) "adie_loopback", &snddev_icodec_debug_fops);
 	}
 #endif
-#ifdef CONFIG_CODEC_AIC3008
+#if 0
 	clk_enable(icodec_drv->rx_mclk);
 	clk_enable(icodec_drv->rx_sclk);
 	clk_enable(icodec_drv->tx_mclk);
@@ -1334,7 +1291,7 @@ error_rx_mclk:
 	platform_driver_unregister(&snddev_icodec_driver);
 error_platform_driver:
 
-	MM_AUD_ERR("%s: encounter error\n", __func__);
+	pr_aud_err("%s: encounter error\n", __func__);
 	printk("%s(): err\n", __func__);
 	return -ENODEV;
 }

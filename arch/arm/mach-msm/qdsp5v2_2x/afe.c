@@ -68,13 +68,13 @@ static void afe_dsp_event(void *data, unsigned id, size_t len,
 		break;
 	}
 	case AFE_APU_MSG_VOC_TIMING_SUCCESS:
-		MM_AUD_INFO("Received VOC_TIMING_SUCCESS message from AFETASK\n");
+		pr_aud_info("Received VOC_TIMING_SUCCESS message from AFETASK\n");
 		break;
 	case ADSP_MESSAGE_ID:
 		MM_DBG("Received ADSP event: module enable/disable(audpptask)");
 		break;
 	default:
-		MM_AUD_INFO("unexpected message from afe \n");
+		pr_aud_info("unexpected message from afe \n");
 	}
 
 	return;
@@ -108,7 +108,7 @@ int afe_enable(u8 path_id, struct msm_afe_config *config)
 
 	if (path_id < AFE_HW_PATH_CODEC_RX ||
 	    path_id > AFE_HW_PATH_MI2S_TX) {
-		MM_AUD_ERR("invalid path id %d\n", path_id);
+		pr_aud_err("invalid path id %d\n", path_id);
 		return -EINVAL;
 	}
 
@@ -118,9 +118,10 @@ int afe_enable(u8 path_id, struct msm_afe_config *config)
 		/* enable afe */
 		rc = msm_adsp_get("AFETASK", &afe->mod, &afe->adsp_ops, afe);
 		if (rc < 0) {
-			MM_AUD_ERR("%s: failed to get AFETASK module\n", __func__);
+			pr_aud_err("%s: failed to get AFETASK module\n", __func__);
 			goto error_adsp_get;
 		}
+		pr_aud_info("Enabling msm_adsp_enable");
 		rc = msm_adsp_enable(afe->mod);
 		if (rc < 0)
 			goto error_adsp_enable;
@@ -131,7 +132,7 @@ int afe_enable(u8 path_id, struct msm_afe_config *config)
 		afe->codec_config[GETDEVICEID(path_id)],
 		msecs_to_jiffies(AFE_MAX_TIMEOUT));
 	if (!rc) {
-		MM_AUD_ERR("AFE failed to respond within %d ms\n", AFE_MAX_TIMEOUT);
+		pr_aud_err("AFE failed to respond within %d ms\n", AFE_MAX_TIMEOUT);
 		rc = -ENODEV;
 		if (!afe->in_use) {
 			if (!afe->aux_conf_flag ||
@@ -174,7 +175,7 @@ int afe_config_aux_codec(int pcm_ctl_value, int aux_codec_intf_value,
 		/* enable afe */
 		rc = msm_adsp_get("AFETASK", &afe->mod, &afe->adsp_ops, afe);
 		if (rc < 0) {
-			MM_AUD_ERR("%s: failed to get AFETASK module\n", __func__);
+			pr_aud_err("%s: failed to get AFETASK module\n", __func__);
 			goto error_adsp_get;
 		}
 		rc = msm_adsp_enable(afe->mod);
@@ -209,7 +210,7 @@ int afe_disable(u8 path_id)
 
 	if (path_id < AFE_HW_PATH_CODEC_RX ||
 	    path_id > AFE_HW_PATH_MI2S_TX) {
-		MM_AUD_ERR("invalid path id %d\n", path_id);
+		pr_aud_err("invalid path id %d\n", path_id);
 		return -EINVAL;
 	}
 
@@ -223,7 +224,7 @@ int afe_disable(u8 path_id)
 		!afe->codec_config[GETDEVICEID(path_id)],
 		msecs_to_jiffies(AFE_MAX_TIMEOUT));
 	if (!rc) {
-		MM_AUD_ERR("AFE failed to respond within %d ms\n", AFE_MAX_TIMEOUT);
+		pr_aud_err("AFE failed to respond within %d ms\n", AFE_MAX_TIMEOUT);
 		rc = -1;
 	} else
 		rc = 0;
@@ -243,7 +244,7 @@ static int __init afe_init(void)
 {
 	struct msm_afe_state *afe = &the_afe_state;
 
-	MM_AUD_INFO("AFE driver init\n");
+	pr_aud_info("AFE driver init\n");
 
 	memset(afe, 0, sizeof(struct msm_afe_state));
 	afe->adsp_ops.event = afe_dsp_event;
@@ -255,7 +256,7 @@ static int __init afe_init(void)
 
 static void __exit afe_exit(void)
 {
-	MM_AUD_INFO("AFE driver exit\n");
+	pr_aud_info("AFE driver exit\n");
 	if (the_afe_state.mod)
 		msm_adsp_put(the_afe_state.mod);
 	return;
