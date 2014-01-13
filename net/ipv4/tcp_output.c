@@ -250,11 +250,15 @@ void tcp_select_initial_window(int __space, __u32 mss,
 		else
 			*rcv_wnd = min(*rcv_wnd, init_cwnd * mss);
 	}
-        /* Lock the initial TCP window size to 64K*/
-        *rcv_wnd = 64240;
+	/* Due to CONFIG_LARGE_TCP_INITIAL_BUFFER not work, hard code first.*/
+	*rcv_wnd = 65535;
+#ifdef CONFIG_LARGE_TCP_INITIAL_BUFFER
+	/* Lock the initial TCP window size to 64K*/
+	*rcv_wnd = 65535;
+#endif
 
-        /* Set the clamp no higher than max representable value */
-        (*window_clamp) = min(65535U << (*rcv_wscale), *window_clamp);
+	/* Set the clamp no higher than max representable value */
+	(*window_clamp) = min(65535U << (*rcv_wscale), *window_clamp);
 }
 EXPORT_SYMBOL(tcp_select_initial_window);
 
