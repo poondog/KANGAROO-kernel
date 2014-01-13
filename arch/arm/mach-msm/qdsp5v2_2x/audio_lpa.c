@@ -1579,7 +1579,7 @@ static int audio_open(struct inode *inode, struct file *file)
 	spin_lock_init(&audio->event_queue_lock);
 	init_waitqueue_head(&audio->avsync_wait);
 
-	audio->out_sample_rate = 44100;
+	audio->out_sample_rate = 44200;
 	audio->out_channel_mode = AUDPP_CMD_PCM_INTF_STEREO_V;
 	audio->out_bits = AUDPP_CMD_WAV_PCM_WIDTH_16;
 	audio->vol_pan.volume = 0x2000;
