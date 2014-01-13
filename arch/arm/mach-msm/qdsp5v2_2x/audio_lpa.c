@@ -275,7 +275,7 @@ static void lpa_listner(u32 evt_id, union auddev_evt_data *evt_payload,
 		}
 		break;
 	default:
-		pr_aud_err(":ERROR:wrong event\n");
+		MM_AUD_ERR(":ERROR:wrong event\n");
 		break;
 	}
 }
@@ -292,12 +292,12 @@ static int audio_enable(struct audio *audio)
 	audio->out_needed = 0;
 
 	if (msm_adsp_enable(audio->audplay)) {
-		pr_aud_err("msm_adsp_enable(audplay) failed\n");
+		MM_AUD_ERR("msm_adsp_enable(audplay) failed\n");
 		return -ENODEV;
 	}
 
 	if (audpp_enable(audio->dec_id, audio_dsp_event, audio)) {
-		pr_aud_err("audpp_enable() failed\n");
+		MM_AUD_ERR("audpp_enable() failed\n");
 		msm_adsp_disable(audio->audplay);
 		return -ENODEV;
 	}
@@ -339,7 +339,7 @@ static void audplay_dsp_event(void *data, unsigned id, size_t len,
 		MM_DBG("Received ADSP event: module enable(audplaytask)\n");
 		break;
 	default:
-		pr_aud_err("unexpected message from decoder\n");
+		MM_AUD_ERR("unexpected message from decoder\n");
 		break;
 	}
 }
@@ -388,7 +388,7 @@ static void audio_dsp_event(void *private, unsigned id, uint16_t *msg)
 				wake_up(&audio->write_wait);
 				break;
 			default:
-				pr_aud_err("unknown decoder status\n");
+				MM_AUD_ERR("unknown decoder status\n");
 				break;
 			}
 			break;
@@ -442,7 +442,7 @@ static void audio_dsp_event(void *private, unsigned id, uint16_t *msg)
 		break;
 
 	default:
-		pr_aud_err("UNKNOWN (%d)\n", id);
+		MM_AUD_ERR("UNKNOWN (%d)\n", id);
 	}
 
 }
@@ -482,7 +482,7 @@ static void audlpa_async_send_buffer(struct audio *audio)
 	struct audlpa_buffer_node *next_buf = NULL;
 
 	temp = audio->bytecount_head;
-	//pr_aud_err("audlpa_async_send_buffer -audio->device_switch:%d,audio->drv_status:%d,audio->bytecount_head =%lld"
+	//MM_AUD_ERR("audlpa_async_send_buffer -audio->device_switch:%d,audio->drv_status:%d,audio->bytecount_head =%lld"
 	//			,audio->device_switch,audio->drv_status,audio->bytecount_head);
 	if (audio->device_switch == DEVICE_SWITCH_STATE_NONE) {
 		list_for_each_entry(next_buf, &audio->out_queue, list) {
@@ -535,12 +535,12 @@ static void audlpa_async_send_buffer(struct audio *audio)
 			else if ((signed)(temp >= 0) && ((signed)(next_buf->buf.data_len - temp) < 0)) {
 				MM_DBG("audlpa_async_send_buffer - else case: sending the rest of the buffer bassedon AV sync");
 				cmd.buf_ptr	= (unsigned) next_buf->paddr;
-				//pr_aud_err("cmd.buf_ptr=%d",cmd.buf_ptr);
+				//MM_AUD_ERR("cmd.buf_ptr=%d",cmd.buf_ptr);
 				cmd.buf_size = next_buf->buf.data_len >> 1;
-				//pr_aud_err("cmd.buf_size=%d",cmd.buf_size);
+				//MM_AUD_ERR("cmd.buf_size=%d",cmd.buf_size);
 				cmd.partition_number	= 0;
 				audio->bytecount_given = audio->bytecount_head + next_buf->buf.data_len;
-				//pr_aud_err("roger: audio->bytecount_given=%lld",audio->bytecount_given);
+				//MM_AUD_ERR("roger: audio->bytecount_given=%lld",audio->bytecount_given);
 				wmb();
 				audplay_send_queue0(audio, &cmd, sizeof(cmd));
 				audio->out_needed = 0;
@@ -587,11 +587,11 @@ static void audlpa_async_send_data(struct audio *audio, unsigned needed,
 				DEVICE_SWITCH_STATE_COMPLETE){
 
 			//list_for_each_entry(next_buf, &audio->out_queue, list)
-			//pr_aud_err("audlpa_async_send_data :- popping out a buffer- next_buf-data_Len:%d,next_buf-addr: %lu",
+			//MM_AUD_ERR("audlpa_async_send_data :- popping out a buffer- next_buf-data_Len:%d,next_buf-addr: %lu",
 			//		   next_buf->buf.data_len,(unsigned long)next_buf->paddr);
 
 				audio->bytecount_head += used_buf->buf.data_len;
-				//pr_aud_err("audio->bytecount_head updated- %llu",audio->bytecount_head);
+				//MM_AUD_ERR("audio->bytecount_head updated- %llu",audio->bytecount_head);
 				temp = audio->bytecount_head;
 				list_del(&used_buf->list);
 				evt_payload.aio_buf = used_buf->buf;
@@ -735,7 +735,7 @@ static long audlpa_process_event_req(struct audio *audio, void __user *arg)
 		usr_evt.event_payload = drv_evt->payload;
 		list_add_tail(&drv_evt->list, &audio->free_event_queue);
 	} else {
-		pr_aud_err("%s: fail to find event\n", __func__);
+		MM_AUD_ERR("%s: fail to find event\n", __func__);
 		spin_unlock_irqrestore(&audio->event_queue_lock, flags);
 		return -1;
 	}
@@ -764,7 +764,7 @@ static int audlpa_pmem_check(struct audio *audio,
 	list_for_each_entry(region_elt, &audio->pmem_region_queue, list) {
 		if (CONTAINS(region_elt, &t) || CONTAINS(&t, region_elt) ||
 		    OVERLAPS(region_elt, &t)) {
-			pr_aud_err("region (vaddr %p len %ld)"
+			MM_AUD_ERR("region (vaddr %p len %ld)"
 				" clashes with registered region"
 				" (vaddr %p paddr %p len %ld)\n",
 				vaddr, len,
@@ -878,13 +878,13 @@ static int audlpa_pmem_lookup_vaddr(struct audio *audio, void *addr,
 	}
 
 	if (match_count > 1) {
-		pr_aud_err("multiple hits for vaddr %p, len %ld\n", addr, len);
+		MM_AUD_ERR("multiple hits for vaddr %p, len %ld\n", addr, len);
 		list_for_each_entry(region_elt,
 		  &audio->pmem_region_queue, list) {
 			if (addr >= region_elt->vaddr &&
 			    addr < region_elt->vaddr + region_elt->len &&
 			    addr + len <= region_elt->vaddr + region_elt->len)
-				pr_aud_err("\t%p, %ld --> %p\n", region_elt->vaddr,
+				MM_AUD_ERR("\t%p, %ld --> %p\n", region_elt->vaddr,
 						region_elt->len,
 						(void *)region_elt->paddr);
 		}
@@ -902,7 +902,7 @@ unsigned long audlpa_pmem_fixup(struct audio *audio, void *addr,
 
 	ret = audlpa_pmem_lookup_vaddr(audio, addr, len, &region);
 	if (ret) {
-		pr_aud_err("lookup (%p, %ld) failed\n", addr, len);
+		MM_AUD_ERR("lookup (%p, %ld) failed\n", addr, len);
 		return 0;
 	}
 	if (ref_up)
@@ -952,7 +952,7 @@ static int audlpa_aio_buf_add(struct audio *audio, unsigned dir,
 		spin_lock_irqsave(&audio->dsp_lock, flags);
 		list_add_tail(&buf_node->list, &audio->out_queue);
 		//list_for_each_entry(next_buf, &audio->out_queue, list)
-		//	pr_aud_err("audlpa_aio_buf_add :- Adding a buffer to list - buf_node-data_Len:%d,buf_node-addr: %lu",
+		//	MM_AUD_ERR("audlpa_aio_buf_add :- Adding a buffer to list - buf_node-data_Len:%d,buf_node-addr: %lu",
 		//		   next_buf->buf.data_len,(unsigned long)next_buf->paddr);
 		spin_unlock_irqrestore(&audio->dsp_lock, flags);
 		audlpa_async_send_data(audio, 0, 0);
@@ -1153,7 +1153,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			rc = wait_event_interruptible(audio->write_wait,
 				!audio->wflush);
 			if (rc < 0) {
-				pr_aud_err("AUDIO_FLUSH interrupted\n");
+				MM_AUD_ERR("AUDIO_FLUSH interrupted\n");
 				rc = -EINTR;
 			}
 		} else {
@@ -1163,10 +1163,10 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	case AUDIO_SET_CONFIG:{
 		struct msm_audio_config config;
-		pr_aud_info("AUDIO_SET_CONFIG\n");
+		MM_AUD_INFO("AUDIO_SET_CONFIG\n");
 		if (copy_from_user(&config, (void *) arg, sizeof(config))) {
 			rc = -EFAULT;
-			pr_aud_info("ERROR: copy from user\n");
+			MM_AUD_INFO("ERROR: copy from user\n");
 			break;
 		}
 		if (config.channel_count == 1) {
@@ -1175,7 +1175,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			config.channel_count = AUDPP_CMD_PCM_INTF_STEREO_V;
 		} else {
 			rc = -EINVAL;
-			pr_aud_info("ERROR: config.channel_count == %d\n",
+			MM_AUD_INFO("ERROR: config.channel_count == %d\n",
 					config.channel_count);
 			break;
 		}
@@ -1188,7 +1188,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			config.bits = AUDPP_CMD_WAV_PCM_WIDTH_24;
 		else {
 			rc = -EINVAL;
-			pr_aud_info("ERROR: config.bits == %d\n", config.bits);
+			MM_AUD_INFO("ERROR: config.bits == %d\n", config.bits);
 			break;
 		}
 		audio->out_sample_rate = config.sample_rate;
@@ -1307,7 +1307,7 @@ int audlpa_async_fsync(struct audio *audio)
 	rc = wait_event_interruptible_timeout(audio->write_wait,
 				  (audio->teos || audio->wflush ||
 				  audio->stopped), msecs_to_jiffies(MSM_AUD_DECODER_WAIT_MS));
-	//pr_aud_err("audlpa_async_fsync after wait_event_interruptible_timeout rc =%d",rc);
+	//MM_AUD_ERR("audlpa_async_fsync after wait_event_interruptible_timeout rc =%d",rc);
 	if (rc < 0)
 		goto done;
 
@@ -1361,7 +1361,7 @@ static int audio_release(struct inode *inode, struct file *file)
 
 	MM_DBG("\n"); /* Macro prints the file name and function */
 
-	pr_aud_info("audio instance 0x%08x freeing\n", (int)audio);
+	MM_AUD_INFO("audio instance 0x%08x freeing\n", (int)audio);
 	mutex_lock(&audio->lock);
 	auddev_unregister_evt_listner(AUDDEV_CLNT_DEC, audio->dec_id);
 	audio_disable(audio);
@@ -1403,7 +1403,7 @@ static void audlpa_post_event(struct audio *audio, int type,
 	} else {
 		e_node = kmalloc(sizeof(struct audlpa_event), GFP_ATOMIC);
 		if (!e_node) {
-			pr_aud_err("No mem to post event %d\n", type);
+			MM_AUD_ERR("No mem to post event %d\n", type);
 			return;
 		}
 	}
@@ -1503,11 +1503,11 @@ static int audio_open(struct inode *inode, struct file *file)
 	/* Allocate audio instance, set to zero */
 	audio = kzalloc(sizeof(struct audio), GFP_KERNEL);
 	if (!audio) {
-		pr_aud_err("no memory to allocate audio instance\n");
+		MM_AUD_ERR("no memory to allocate audio instance\n");
 		rc = -ENOMEM;
 		goto done;
 	}
-	pr_aud_info("audio instance 0x%08x created\n", (int)audio);
+	MM_AUD_INFO("audio instance 0x%08x created\n", (int)audio);
 
 	if ((file->f_mode & FMODE_WRITE) && !(file->f_mode & FMODE_READ)) {
 		dec_attrb |= MSM_AUD_MODE_TUNNEL;
@@ -1520,7 +1520,7 @@ static int audio_open(struct inode *inode, struct file *file)
 	/* Allocate the decoder based on inode minor number*/
 	audio->minor_no = iminor(inode);
 	if (audio->minor_no >= ARRAY_SIZE(audlpa_decs)) {
-		pr_aud_err("incorrect minor_no %d\n", audio->minor_no);
+		MM_AUD_ERR("incorrect minor_no %d\n", audio->minor_no);
 		kfree(audio);
 		goto done;
 	}
@@ -1533,9 +1533,9 @@ static int audio_open(struct inode *inode, struct file *file)
 	decid = audpp_adec_alloc(dec_attrb, &audio->module_name,
 			&audio->queue_id);
 	if (decid < 0) {
-		pr_aud_err("No free decoder available\n");
+		MM_AUD_ERR("No free decoder available\n");
 		rc = -ENODEV;
-		pr_aud_info("audio instance 0x%08x freeing\n", (int)audio);
+		MM_AUD_INFO("audio instance 0x%08x freeing\n", (int)audio);
 		kfree(audio);
 		goto done;
 	}
@@ -1548,7 +1548,7 @@ static int audio_open(struct inode *inode, struct file *file)
 		&audplay_adsp_ops_lpa, audio);
 
 	if (rc) {
-		pr_aud_err("failed to get %s module\n", audio->module_name);
+		MM_AUD_ERR("failed to get %s module\n", audio->module_name);
 		goto err;
 	}
 
@@ -1592,7 +1592,7 @@ static int audio_open(struct inode *inode, struct file *file)
 					lpa_listner,
 					(void *)audio);
 	if (rc) {
-		pr_aud_err("%s: failed to register listnet\n", __func__);
+		MM_AUD_ERR("%s: failed to register listnet\n", __func__);
 		goto event_err;
 	}
 
@@ -1616,7 +1616,7 @@ static int audio_open(struct inode *inode, struct file *file)
 		if (e_node)
 			list_add_tail(&e_node->list, &audio->free_event_queue);
 		else {
-			pr_aud_err("event pkt alloc failed\n");
+			MM_AUD_ERR("event pkt alloc failed\n");
 			break;
 		}
 	}
@@ -1628,7 +1628,7 @@ err:
 	iounmap(audio->data);
 	pmem_kfree(audio->phys);
 	audpp_adec_free(audio->dec_id);
-	pr_aud_info("audio instance 0x%08x freeing\n", (int)audio);
+	MM_AUD_INFO("audio instance 0x%08x freeing\n", (int)audio);
 	kfree(audio);
 	return rc;
 }

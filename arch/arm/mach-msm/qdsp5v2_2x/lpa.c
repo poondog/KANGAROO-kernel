@@ -74,7 +74,7 @@ static void lpa_reset(struct lpa_drv *lpa)
 	/* Need to make sure not disable clock while other device is enabled */
 	adsp_clk = clk_get(NULL, "adsp_clk");
 	if (!adsp_clk) {
-		pr_aud_err("failed to get adsp clk\n");
+		MM_AUD_ERR("failed to get adsp clk\n");
 		goto error;
 	}
 	clk_enable(adsp_clk);
@@ -288,7 +288,7 @@ struct lpa_drv *lpa_get(void)
 
 	mutex_lock(&the_lpa_state.lpa_lock);
 	if (the_lpa_state.assigned) {
-		pr_aud_err("LPA HW accupied\n");
+		MM_AUD_ERR("LPA HW accupied\n");
 		ret_lpa = ERR_PTR(-EBUSY);
 		goto error;
 	}
@@ -356,7 +356,7 @@ void lpa_put(struct lpa_drv *lpa)
 
 	mutex_lock(&the_lpa_state.lpa_lock);
 	if (!lpa || &the_lpa_state.lpa_drv != lpa) {
-		pr_aud_err("invalid arg\n");
+		MM_AUD_ERR("invalid arg\n");
 		goto error;
 	}
 	/* Deinitialize */
@@ -375,7 +375,7 @@ int lpa_cmd_codec_config(struct lpa_drv *lpa,
 	u32 val = 0;
 
 	if (!lpa || !config_ptr) {
-		pr_aud_err("invalid parameters\n");
+		MM_AUD_ERR("invalid parameters\n");
 		return -EINVAL;
 	}
 
@@ -396,7 +396,7 @@ int lpa_cmd_codec_config(struct lpa_drv *lpa,
 		num_channels = LPA_NUM_CHAN_MONO;
 		break;
 	default:
-		pr_aud_err("unsupported number of channel\n");
+		MM_AUD_ERR("unsupported number of channel\n");
 		goto error;
 	}
 	val |= (num_channels << LPA_OBUF_CODEC_NUM_CHAN_SHFT) &
@@ -431,7 +431,7 @@ int lpa_cmd_codec_config(struct lpa_drv *lpa,
 		sample_rate = LPA_SAMPLE_RATE_8KHZ;
 		break;
 	default:
-		pr_aud_err("unsupported sample rate \n");
+		MM_AUD_ERR("unsupported sample rate \n");
 		goto error;
 	}
 	val |= (sample_rate << LPA_OBUF_CODEC_SAMP_SHFT) &
@@ -447,7 +447,7 @@ int lpa_cmd_codec_config(struct lpa_drv *lpa,
 		width = LPA_BITS_PER_CHAN_16BITS;
 		break;
 	default:
-		pr_aud_err("unsupported sample width \n");
+		MM_AUD_ERR("unsupported sample width \n");
 		goto error;
 	}
 	val |= (width << LPA_OBUF_CODEC_BITS_PER_CHAN_SHFT) &
@@ -527,7 +527,7 @@ int lpa_cmd_enable_codec(struct lpa_drv *lpa, bool enable)
 			lpa_enable_codec(lpa, 0);
 			MM_DBG("LPA codec is disabled\n");
 		} else
-			pr_aud_err("LPA codec is already disable\n");
+			MM_AUD_ERR("LPA codec is already disable\n");
 	}
 	return 0;
 }
@@ -540,17 +540,17 @@ static int lpa_probe(struct platform_device *pdev)
 	struct resource *mem_src;
 	struct msm_lpa_platform_data *pdata;
 
-	pr_aud_info("lpa probe\n");
+	MM_AUD_INFO("lpa probe\n");
 
 	if (!pdev || !pdev->dev.platform_data) {
-		pr_aud_err("no plaform data\n");
+		MM_AUD_ERR("no plaform data\n");
 		rc = -ENODEV;
 		goto error;
 	}
 
 	mem_src = platform_get_resource_byname(pdev, IORESOURCE_MEM, "lpa");
 	if (!mem_src) {
-		pr_aud_err("LPA base address undefined\n");
+		MM_AUD_ERR("LPA base address undefined\n");
 		rc = -ENODEV;
 		goto error;
 	}

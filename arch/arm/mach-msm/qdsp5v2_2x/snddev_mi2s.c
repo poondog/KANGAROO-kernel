@@ -57,7 +57,7 @@ static int snddev_mi2s_open_tx(struct msm_snddev_info *dev_info)
 	if (snddev_mi2s_data->channel_mode == 2) {
 		channels = MI2S_CHAN_STEREO;
 	} else {
-		pr_aud_err("%s: Invalid number of channels = %u\n", __func__,
+		MM_AUD_ERR("%s: Invalid number of channels = %u\n", __func__,
 			snddev_mi2s_data->channel_mode);
 		return -EINVAL;
 	}
@@ -72,7 +72,7 @@ static int snddev_mi2s_open_tx(struct msm_snddev_info *dev_info)
 	rc = afe_enable(AFE_HW_PATH_MI2S_TX, &afe_config);
 
 	if (IS_ERR_VALUE(rc)) {
-		pr_aud_err("%s: afe_enable failed for AFE_HW_PATH_MI2S_TX "
+		MM_AUD_ERR("%s: afe_enable failed for AFE_HW_PATH_MI2S_TX "
 		       "rc = %d\n", __func__, rc);
 		return -ENODEV;
 	}
@@ -118,7 +118,7 @@ static int snddev_mi2s_open_rx(struct msm_snddev_info *dev_info)
 	rc = afe_enable(AFE_HW_PATH_MI2S_RX, &afe_config);
 
 	if (IS_ERR_VALUE(rc)) {
-		pr_aud_err("%s: encounter error\n", __func__);
+		MM_AUD_ERR("%s: encounter error\n", __func__);
 		return -ENODEV;
 	}
 
@@ -138,14 +138,14 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 	u32 dir;
 	struct snddev_mi2s_data *snddev_mi2s_data;
 	if (!dev_info) {
-		pr_aud_err("%s:  msm_snddev_info is null \n", __func__);
+		MM_AUD_ERR("%s:  msm_snddev_info is null \n", __func__);
 		return -EINVAL;
 	}
 	snddev_mi2s_data = dev_info->private_data;
 	mutex_lock(&drv->lock);
 
 	if (drv->sd_lines_used & snddev_mi2s_data->sd_lines) {
-		pr_aud_err("%s: conflict in SD data line. can not use the device\n",
+		MM_AUD_ERR("%s: conflict in SD data line. can not use the device\n",
 		       __func__);
 		mutex_unlock(&drv->lock);
 		return -EBUSY;
@@ -154,7 +154,7 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 		if (audio_ops->mi2s_clk_enable)
 			rc = audio_ops->mi2s_clk_enable(1);
 		if (rc) {
-			pr_aud_err("%s: mi2s GPIO config failed for %s\n",
+			MM_AUD_ERR("%s: mi2s GPIO config failed for %s\n",
 			       __func__, snddev_mi2s_data->name);
 			mutex_unlock(&drv->lock);
 			return -EIO;
@@ -174,7 +174,7 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 
 		if (rc) {
 			rc = -EIO;
-			pr_aud_err("%s: mi2s GPIO config failed for %s\n",
+			MM_AUD_ERR("%s: mi2s GPIO config failed for %s\n",
 			       __func__, snddev_mi2s_data->name);
 			goto mi2s_data_gpio_failure;
 		}
@@ -184,7 +184,7 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 		rc = snddev_mi2s_open_rx(dev_info);
 
 		if (IS_ERR_VALUE(rc)) {
-			pr_aud_err(" snddev_mi2s_open_rx failed \n");
+			MM_AUD_ERR(" snddev_mi2s_open_rx failed \n");
 			goto mi2s_cleanup_open;
 		}
 
@@ -201,7 +201,7 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 
 		if (rc) {
 			rc = -EIO;
-			pr_aud_err("%s: mi2s GPIO config failed for %s\n",
+			MM_AUD_ERR("%s: mi2s GPIO config failed for %s\n",
 			       __func__, snddev_mi2s_data->name);
 			goto mi2s_data_gpio_failure;
 		}
@@ -211,7 +211,7 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 		rc = snddev_mi2s_open_tx(dev_info);
 
 		if (IS_ERR_VALUE(rc)) {
-			pr_aud_err(" snddev_mi2s_open_tx failed \n");
+			MM_AUD_ERR(" snddev_mi2s_open_tx failed \n");
 			goto mi2s_cleanup_open;
 		}
 
@@ -251,12 +251,12 @@ static int snddev_mi2s_close(struct msm_snddev_info *dev_info)
 	struct snddev_mi2s_data *snddev_mi2s_data;
 
 	if (!dev_info) {
-		pr_aud_err("%s:  msm_snddev_info is null \n", __func__);
+		MM_AUD_ERR("%s:  msm_snddev_info is null \n", __func__);
 		return -EINVAL;
 	}
 	snddev_mi2s_data = dev_info->private_data;
 	if (!dev_info->opened) {
-		pr_aud_err(" %s: calling close device with out opening the"
+		MM_AUD_ERR(" %s: calling close device with out opening the"
 		       " device \n", __func__);
 		return -EIO;
 	}
@@ -317,13 +317,13 @@ static int snddev_mi2s_probe(struct platform_device *pdev)
 	pdata = pdev->dev.platform_data;
 	if ((pdata->capability & SNDDEV_CAP_RX) &&
 	    (pdata->capability & SNDDEV_CAP_TX)) {
-		pr_aud_err("%s: invalid device data either RX or TX\n", __func__);
+		MM_AUD_ERR("%s: invalid device data either RX or TX\n", __func__);
 		return -ENODEV;
 	}
 
 	dev_info = kzalloc(sizeof(struct msm_snddev_info), GFP_KERNEL);
 	if (!dev_info) {
-		pr_aud_err("%s: uneable to allocate memeory for msm_snddev_info \n",
+		MM_AUD_ERR("%s: uneable to allocate memeory for msm_snddev_info \n",
 		       __func__);
 
 		return -ENOMEM;
@@ -369,19 +369,19 @@ static int __init snddev_mi2s_init(void)
 	rc = platform_driver_register(&snddev_mi2s_driver);
 	if (IS_ERR_VALUE(rc)) {
 
-		pr_aud_err("%s: platform_driver_register failed  \n", __func__);
+		MM_AUD_ERR("%s: platform_driver_register failed  \n", __func__);
 		goto error_platform_driver;
 	}
 
 	drv->mclk = clk_get(NULL, "mi2s_m_clk");
 	if (IS_ERR(drv->mclk)) {
-		pr_aud_err("%s:  clk_get mi2s_mclk failed  \n", __func__);
+		MM_AUD_ERR("%s:  clk_get mi2s_mclk failed  \n", __func__);
 		goto error_mclk;
 	}
 
 	drv->sclk = clk_get(NULL, "mi2s_s_clk");
 	if (IS_ERR(drv->sclk)) {
-		pr_aud_err("%s:  clk_get mi2s_sclk failed  \n", __func__);
+		MM_AUD_ERR("%s:  clk_get mi2s_sclk failed  \n", __func__);
 
 		goto error_sclk;
 	}
@@ -398,7 +398,7 @@ error_mclk:
 	platform_driver_unregister(&snddev_mi2s_driver);
 error_platform_driver:
 
-	pr_aud_err("%s: encounter error\n", __func__);
+	MM_AUD_ERR("%s: encounter error\n", __func__);
 	return -ENODEV;
 }
 

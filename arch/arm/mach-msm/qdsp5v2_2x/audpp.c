@@ -166,7 +166,7 @@ int audpp_send_queue3(void *cmd, unsigned len)
 		result = msm_adsp_write(the_audpp_state.mod,
 			      QDSP_uPAudPPCmd3Queue, cmd, len);
 		if (result) {
-			pr_aud_err("ACDB=> Failed to send audpp_send_queue3 to postproc, retry %d\n", 5 - retry);
+			MM_AUD_ERR("ACDB=> Failed to send audpp_send_queue3 to postproc, retry %d\n", 5 - retry);
 			mdelay(20);
 		} else
 			break;
@@ -303,16 +303,16 @@ static void audpp_dsp_event(void *data, unsigned id, size_t len,
 		break;
 	case AUDPP_MSG_CFG_MSG:
 		if (msg[0] == AUDPP_MSG_ENA_ENA) {
-			pr_aud_info("ENABLE\n");
+			MM_AUD_INFO("ENABLE\n");
 			audpp->enabled = 1;
 			audpp_broadcast(audpp, id, msg);
 		} else if (msg[0] == AUDPP_MSG_ENA_DIS) {
-			pr_aud_info("DISABLE\n");
+			MM_AUD_INFO("DISABLE\n");
 			audpp->enabled = 0;
 			wake_up(&audpp->event_wait);
 			audpp_broadcast(audpp, id, msg);
 		} else {
-			pr_aud_err("invalid config msg %d\n", msg[0]);
+			MM_AUD_ERR("invalid config msg %d\n", msg[0]);
 		}
 		break;
 	case AUDPP_MSG_ROUTING_ACK:
@@ -329,7 +329,7 @@ static void audpp_dsp_event(void *data, unsigned id, size_t len,
 		audpp_notify_clnt(audpp, msg[0], id, msg);
 		break;
 	default:
-		pr_aud_info("unhandled msg id %x\n", id);
+		MM_AUD_INFO("unhandled msg id %x\n", id);
 	}
 }
 
@@ -370,7 +370,7 @@ int audpp_enable(int id, audpp_event_func func, void *private)
 		MM_DBG("enable\n");
 		res = msm_adsp_get("AUDPPTASK", &audpp->mod, &adsp_ops, audpp);
 		if (res < 0) {
-			pr_aud_err("audpp: cannot open AUDPPTASK\n");
+			MM_AUD_ERR("audpp: cannot open AUDPPTASK\n");
 			audpp->open_count = 0;
 			audpp->func[id] = NULL;
 			audpp->private[id] = NULL;
@@ -428,9 +428,9 @@ void audpp_disable(int id, void *private)
 		rc = wait_event_interruptible(audpp->event_wait,
 				(audpp->enabled == 0));
 		if (audpp->enabled == 0)
-			pr_aud_info("Received CFG_MSG_DISABLE from ADSP\n");
+			MM_AUD_INFO("Received CFG_MSG_DISABLE from ADSP\n");
 		else
-			pr_aud_err("Didn't receive CFG_MSG DISABLE \
+			MM_AUD_ERR("Didn't receive CFG_MSG DISABLE \
 					message from ADSP\n");
 		msm_adsp_disable(audpp->mod);
 		msm_adsp_put(audpp->mod);
@@ -490,12 +490,12 @@ int audpp_set_volume_and_pan(unsigned id, unsigned volume, int pan,
 
 	if (objtype) {
 		if (id > 5) {
-			pr_aud_err("Wrong POPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong POPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	} else {
 		if (id > 3) {
-			pr_aud_err("Wrong COPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong COPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	}
@@ -523,12 +523,12 @@ int audpp_dsp_set_mbadrc(unsigned id, unsigned enable,
 {
 	if (objtype) {
 		if (id > 5) {
-			pr_aud_err("Wrong POPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong POPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	} else {
 		if (id > 3) {
-			pr_aud_err("Wrong COPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong COPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	}
@@ -559,12 +559,12 @@ int audpp_dsp_set_qconcert_plus(unsigned id, unsigned enable,
 {
 	if (objtype) {
 		if (id > 5) {
-			pr_aud_err("Wrong POPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong POPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	} else {
 		if (id > 3) {
-			pr_aud_err("Wrong COPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong COPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	}
@@ -596,12 +596,12 @@ int audpp_dsp_set_rx_iir(unsigned id, unsigned enable,
 
 	if (objtype) {
 		if (id > 5) {
-			pr_aud_err("Wrong POPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong POPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	} else {
 		if (id > 3) {
-			pr_aud_err("Wrong COPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong COPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	}
@@ -635,12 +635,12 @@ int audpp_dsp_set_eq(unsigned id, unsigned enable,
 
 	if (objtype) {
 		if (id > 5) {
-			pr_aud_err("Wrong POPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong POPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	} else {
 		if (id > 3) {
-			pr_aud_err("Wrong COPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong COPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	}
@@ -673,12 +673,12 @@ int audpp_dsp_set_vol_pan(unsigned id,
 
 	if (objtype) {
 		if (id > 5) {
-			pr_aud_err("Wrong POPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong POPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	} else {
 		if (id > AUDPP_MAX_COPP_DEVICES) {
-			pr_aud_err("Wrong COPP decoder id: %d\n", id);
+			MM_AUD_ERR("Wrong COPP decoder id: %d\n", id);
 			return -EINVAL;
 		}
 	}
@@ -792,7 +792,7 @@ int audpp_adec_alloc(unsigned dec_attrb, const char **module_name,
 		/* if different codec type, should not cross maximum other
 		   supported */
 		if (audpp->decoder_count > (max_instance + 1)) {
-			pr_aud_err("Can not support, already reached max\n");
+			MM_AUD_ERR("Can not support, already reached max\n");
 			audpp->decoder_count--;
 			audpp->codec_cnt[codec_type]--;
 			goto done;
@@ -806,7 +806,7 @@ int audpp_adec_alloc(unsigned dec_attrb, const char **module_name,
 							max_instances_same_dec;
 		/* if same codec type, should not cross maximum supported */
 		if (audpp->decoder_count > max_instance) {
-			pr_aud_err("Can not support, already reached max\n");
+			MM_AUD_ERR("Can not support, already reached max\n");
 			audpp->decoder_count--;
 			audpp->codec_cnt[codec_type]--;
 			goto done;
@@ -858,7 +858,7 @@ int audpp_adec_alloc(unsigned dec_attrb, const char **module_name,
 		      ((audpp->concurrency) * (audpp->dec_database->num_dec))) +
 		     lidx);
 		decid |= ((*concurrency_entry & AUDPP_OP_MASK) >> 12);
-		pr_aud_info("decid =0x%08x module_name=%s, queueid=%d \n", decid,
+		MM_AUD_INFO("decid =0x%08x module_name=%s, queueid=%d \n", decid,
 				*module_name, *queueid);
 	}
 done:
@@ -882,7 +882,7 @@ void audpp_adec_free(int decid)
 			audpp->dec_inuse &= ~(1 << (idx - 1));
 			audpp->dec_info_table[idx - 1].codec = -1;
 			audpp->dec_info_table[idx - 1].pid = 0;
-			pr_aud_info("free decid =%d \n", decid);
+			MM_AUD_INFO("free decid =%d \n", decid);
 			break;
 		}
 	}
@@ -912,7 +912,7 @@ static ssize_t concurrency_store(struct device *dev,
 	int rc = -1;
 	mutex_lock(audpp->lock_dec);
 	if (audpp->dec_inuse) {
-		pr_aud_err("Can not change profile, while playback in progress\n");
+		MM_AUD_ERR("Can not change profile, while playback in progress\n");
 		goto done;
 	}
 	rc = strict_strtoul(buf, 10, &concurrency);
@@ -922,7 +922,7 @@ static ssize_t concurrency_store(struct device *dev,
 		MM_DBG("Concurrency case %ld\n", audpp->concurrency);
 		rc = count;
 	} else {
-		pr_aud_err("Not a valid Concurrency case\n");
+		MM_AUD_ERR("Not a valid Concurrency case\n");
 		rc = -EINVAL;
 	}
 done:
@@ -965,21 +965,21 @@ static int audpp_probe(struct platform_device *pdev)
 	audpp->dec_database =
 	    (struct msm_adspdec_database *)pdev->dev.platform_data;
 
-	pr_aud_info("Number of decoder supported  %d\n",
+	MM_AUD_INFO("Number of decoder supported  %d\n",
 		audpp->dec_database->num_dec);
-	pr_aud_info("Number of concurrency supported  %d\n",
+	MM_AUD_INFO("Number of concurrency supported  %d\n",
 		audpp->dec_database->num_concurrency_support);
 	init_waitqueue_head(&audpp->event_wait);
 	for (idx = 0; idx < audpp->dec_database->num_dec; idx++) {
 		audpp->dec_info_table[idx].codec = -1;
 		audpp->dec_info_table[idx].pid = 0;
-		pr_aud_info("module_name:%s\n",
+		MM_AUD_INFO("module_name:%s\n",
 			audpp->dec_database->dec_info_list[idx].module_name);
-		pr_aud_info("queueid:%d\n",
+		MM_AUD_INFO("queueid:%d\n",
 			audpp->dec_database->dec_info_list[idx].module_queueid);
-		pr_aud_info("decid:%d\n",
+		MM_AUD_INFO("decid:%d\n",
 			audpp->dec_database->dec_info_list[idx].module_decid);
-		pr_aud_info("nr_codec_support:%d\n",
+		MM_AUD_INFO("nr_codec_support:%d\n",
 			audpp->dec_database->dec_info_list[idx].
 			nr_codec_support);
 	}
