@@ -48,22 +48,22 @@ void vivo_back_mic_enable(int);
 
 static struct q5v2_hw_info q5v2_audio_hw[Q5V2_HW_COUNT] = {
 	[Q5V2_HW_HANDSET] = {
-		.max_gain[VOC_NB_INDEX] = 600,
-		.min_gain[VOC_NB_INDEX] = -1400,
-		.max_gain[VOC_WB_INDEX] = 600,
-		.min_gain[VOC_WB_INDEX] = -1400,
+		.max_gain[VOC_NB_INDEX] = 0,
+		.min_gain[VOC_NB_INDEX] = 0,
+		.max_gain[VOC_WB_INDEX] = 0,
+		.min_gain[VOC_WB_INDEX] = 0,
 	},
 	[Q5V2_HW_HEADSET] = {
 		.max_gain[VOC_NB_INDEX] = 0,
-		.min_gain[VOC_NB_INDEX] = -2000,
+		.min_gain[VOC_NB_INDEX] = 0,
 		.max_gain[VOC_WB_INDEX] = 0,
-		.min_gain[VOC_WB_INDEX] = -2000,
+		.min_gain[VOC_WB_INDEX] = 0,
 	},
 	[Q5V2_HW_SPEAKER] = {
-		.max_gain[VOC_NB_INDEX] = 600,
-		.min_gain[VOC_NB_INDEX] = -900,
-		.max_gain[VOC_WB_INDEX] = 600,
-		.min_gain[VOC_WB_INDEX] = -900,
+		.max_gain[VOC_NB_INDEX] = 0,
+		.min_gain[VOC_NB_INDEX] = 0,
+		.max_gain[VOC_WB_INDEX] = 0,
+		.min_gain[VOC_WB_INDEX] = 0,
 	},
 	[Q5V2_HW_BT_SCO] = {
 		.max_gain[VOC_NB_INDEX] = 0,
@@ -326,29 +326,6 @@ int vivo_support_back_mic(void)
 	return 1;
 }
 
-int vivo_support_beats(void)
-{
-	return 1;
-}
-
-void vivo_enable_beats(int en)
-{
-#if 0
-	pr_aud_info("%s: %d\n", __func__, en);
-	if (!audio_wq) {
-		pr_aud_info("%s: non-wq case\n", __func__);
-		if (en)
-			adie_codec_set_device_analog_volume(NULL, 2, 0x04);
-		else
-			adie_codec_set_device_analog_volume(NULL, 2, 0x14);
-	} else {
-		pr_aud_info("%s: wq case\n", __func__);
-		atomic_set(&beats_enabled, en);
-		queue_work(audio_wq, &audio_work);
-	}
-#endif
-}
-
 void vivo_get_acoustic_tables(struct acoustic_tables *tb)
 {
 	strcpy(tb->aic3254_dsp, "CodecDSPID_BCLK.txt\0");
@@ -400,8 +377,6 @@ static struct acoustic_ops acoustic = {
 	.support_back_mic = vivo_support_back_mic,
 	.enable_back_mic =  vivo_back_mic_enable,
 	.get_acoustic_tables = vivo_get_acoustic_tables,
-	.support_beats = vivo_support_beats,
-	.enable_beats = vivo_enable_beats
 };
 
 static struct aic3254_ctl_ops cops = {
