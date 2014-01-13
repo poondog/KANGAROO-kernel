@@ -573,13 +573,6 @@ static struct ctl_table ipv4_table[] = {
 	{
 		.procname	= "tcp_challenge_ack_limit",
 		.data		= &sysctl_tcp_challenge_ack_limit,
-                .maxlen         = sizeof(int),
-                .mode           = 0644,
-                .proc_handler   = proc_dointvec
-        },
-	{
-		.procname	= "tcp_limit_output_bytes",
-		.data		= &sysctl_tcp_limit_output_bytes,
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec
