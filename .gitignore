@@ -32,7 +32,7 @@ modules.builtin
 *.lzo
 *.patch
 *.gcno
-*.rej
+#*.rej
 *.xzkern
 *.diff
 
